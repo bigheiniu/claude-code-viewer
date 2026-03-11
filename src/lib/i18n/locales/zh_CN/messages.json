@@ -1751,6 +1751,28 @@
     ],
     "translation": "MCP 服务器"
   },
+  "nav.projects": {
+    "translation": "",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/workers/components/TopNav.tsx",
+        8
+      ]
+    ]
+  },
+  "nav.workers": {
+    "translation": "",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/workers/components/TopNav.tsx",
+        9
+      ]
+    ]
+  },
   "notfound.button.go_home": {
     "placeholders": {},
     "comments": [],
@@ -3969,7 +3991,6 @@
     "translation": "不支持显示此媒体格式"
   },
   "workers.create.description": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -3977,10 +3998,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         84
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.create.name": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -3988,10 +4009,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         73
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.create.process_id": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -3999,10 +4020,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         117
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.create.project_id": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4010,10 +4031,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         95
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.create.save": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4021,10 +4042,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         146
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.create.session_id": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4032,10 +4053,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         106
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.create.submit": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4043,10 +4064,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         148
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.create.tags": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4054,10 +4075,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         128
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.create.title": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4065,10 +4086,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         65
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.create.title.edit": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4076,10 +4097,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         63
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.detail.abort": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4087,10 +4108,10 @@
         "src/app/workers/components/WorkerDetailHeader.tsx",
         43
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.detail.meta.created": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4098,10 +4119,10 @@
         "src/app/workers/components/WorkerDetailMeta.tsx",
         36
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.detail.meta.last_activity": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4109,10 +4130,10 @@
         "src/app/workers/components/WorkerDetailMeta.tsx",
         30
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.detail.meta.process": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4120,10 +4141,10 @@
         "src/app/workers/components/WorkerDetailMeta.tsx",
         22
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.detail.meta.project": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4131,10 +4152,10 @@
         "src/app/workers/components/WorkerDetailMeta.tsx",
         10
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.detail.meta.session": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4142,10 +4163,10 @@
         "src/app/workers/components/WorkerDetailMeta.tsx",
         16
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.detail.meta.updated": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4153,10 +4174,10 @@
         "src/app/workers/components/WorkerDetailMeta.tsx",
         42
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.detail.select_prompt": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4164,10 +4185,10 @@
         "src/app/workers/page.tsx",
         157
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.detail.send_message": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4175,10 +4196,10 @@
         "src/app/workers/components/WorkerMessageInput.tsx",
         24
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.list.empty": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4186,10 +4207,10 @@
         "src/app/workers/components/WorkerList.tsx",
         31
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.list.new_worker": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4197,10 +4218,10 @@
         "src/app/workers/components/WorkerList.tsx",
         22
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.page.loading": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4208,10 +4229,10 @@
         "src/app/workers/page.tsx",
         187
       ]
-    ]
+    ],
+    "translation": ""
   },
   "workers.page.title": {
-    "translation": "",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4219,6 +4240,7 @@
         "src/app/workers/components/WorkerList.tsx",
         18
       ]
-    ]
+    ],
+    "translation": ""
   }
 }

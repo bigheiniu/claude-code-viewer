@@ -1751,6 +1751,28 @@
     ],
     "translation": "MCP Servers"
   },
+  "nav.projects": {
+    "translation": "Projects",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/workers/components/TopNav.tsx",
+        8
+      ]
+    ]
+  },
+  "nav.workers": {
+    "translation": "Workers",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/workers/components/TopNav.tsx",
+        9
+      ]
+    ]
+  },
   "notfound.button.go_home": {
     "placeholders": {},
     "comments": [],
@@ -3969,7 +3991,6 @@
     "translation": "Media format not supported for display"
   },
   "workers.create.description": {
-    "translation": "workers.create.description",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -3977,10 +3998,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         84
       ]
-    ]
+    ],
+    "translation": "Description"
   },
   "workers.create.name": {
-    "translation": "workers.create.name",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -3988,10 +4009,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         73
       ]
-    ]
+    ],
+    "translation": "Name"
   },
   "workers.create.process_id": {
-    "translation": "workers.create.process_id",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -3999,10 +4020,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         117
       ]
-    ]
+    ],
+    "translation": "Process ID"
   },
   "workers.create.project_id": {
-    "translation": "workers.create.project_id",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4010,10 +4031,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         95
       ]
-    ]
+    ],
+    "translation": "Project ID"
   },
   "workers.create.save": {
-    "translation": "workers.create.save",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4021,10 +4042,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         146
       ]
-    ]
+    ],
+    "translation": "Save"
   },
   "workers.create.session_id": {
-    "translation": "workers.create.session_id",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4032,10 +4053,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         106
       ]
-    ]
+    ],
+    "translation": "Session ID"
   },
   "workers.create.submit": {
-    "translation": "workers.create.submit",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4043,10 +4064,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         148
       ]
-    ]
+    ],
+    "translation": "Create"
   },
   "workers.create.tags": {
-    "translation": "workers.create.tags",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4054,10 +4075,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         128
       ]
-    ]
+    ],
+    "translation": "Tags"
   },
   "workers.create.title": {
-    "translation": "workers.create.title",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4065,10 +4086,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         65
       ]
-    ]
+    ],
+    "translation": "Create Worker"
   },
   "workers.create.title.edit": {
-    "translation": "workers.create.title.edit",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4076,10 +4097,10 @@
         "src/app/workers/components/CreateWorkerDialog.tsx",
         63
       ]
-    ]
+    ],
+    "translation": "Edit Worker"
   },
   "workers.detail.abort": {
-    "translation": "workers.detail.abort",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4087,10 +4108,10 @@
         "src/app/workers/components/WorkerDetailHeader.tsx",
         43
       ]
-    ]
+    ],
+    "translation": "Abort"
   },
   "workers.detail.meta.created": {
-    "translation": "workers.detail.meta.created",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4098,10 +4119,10 @@
         "src/app/workers/components/WorkerDetailMeta.tsx",
         36
       ]
-    ]
+    ],
+    "translation": "Created"
   },
   "workers.detail.meta.last_activity": {
-    "translation": "workers.detail.meta.last_activity",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4109,10 +4130,10 @@
         "src/app/workers/components/WorkerDetailMeta.tsx",
         30
       ]
-    ]
+    ],
+    "translation": "Last Activity"
   },
   "workers.detail.meta.process": {
-    "translation": "workers.detail.meta.process",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4120,10 +4141,10 @@
         "src/app/workers/components/WorkerDetailMeta.tsx",
         22
       ]
-    ]
+    ],
+    "translation": "Process"
   },
   "workers.detail.meta.project": {
-    "translation": "workers.detail.meta.project",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4131,10 +4152,10 @@
         "src/app/workers/components/WorkerDetailMeta.tsx",
         10
       ]
-    ]
+    ],
+    "translation": "Project"
   },
   "workers.detail.meta.session": {
-    "translation": "workers.detail.meta.session",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4142,10 +4163,10 @@
         "src/app/workers/components/WorkerDetailMeta.tsx",
         16
       ]
-    ]
+    ],
+    "translation": "Session"
   },
   "workers.detail.meta.updated": {
-    "translation": "workers.detail.meta.updated",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4153,10 +4174,10 @@
         "src/app/workers/components/WorkerDetailMeta.tsx",
         42
       ]
-    ]
+    ],
+    "translation": "Updated"
   },
   "workers.detail.select_prompt": {
-    "translation": "workers.detail.select_prompt",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4164,10 +4185,10 @@
         "src/app/workers/page.tsx",
         157
       ]
-    ]
+    ],
+    "translation": "Select a worker to view details"
   },
   "workers.detail.send_message": {
-    "translation": "workers.detail.send_message",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4175,10 +4196,10 @@
         "src/app/workers/components/WorkerMessageInput.tsx",
         24
       ]
-    ]
+    ],
+    "translation": "Send Message"
   },
   "workers.list.empty": {
-    "translation": "workers.list.empty",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4186,10 +4207,10 @@
         "src/app/workers/components/WorkerList.tsx",
         31
       ]
-    ]
+    ],
+    "translation": "No workers yet"
   },
   "workers.list.new_worker": {
-    "translation": "workers.list.new_worker",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4197,10 +4218,10 @@
         "src/app/workers/components/WorkerList.tsx",
         22
       ]
-    ]
+    ],
+    "translation": "New Worker"
   },
   "workers.page.loading": {
-    "translation": "workers.page.loading",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4208,10 +4229,10 @@
         "src/app/workers/page.tsx",
         187
       ]
-    ]
+    ],
+    "translation": "Loading workers..."
   },
   "workers.page.title": {
-    "translation": "workers.page.title",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -4219,6 +4240,7 @@
         "src/app/workers/components/WorkerList.tsx",
         18
       ]
-    ]
+    ],
+    "translation": "Workers"
   }
 }

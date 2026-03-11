@@ -1,16 +1,17 @@
 import { Trans } from "@lingui/react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import { cn } from "@/lib/utils";
+
+const tabs: ReadonlyArray<{ to: "/projects" | "/workers"; label: ReactNode }> =
+  [
+    { to: "/projects", label: <Trans id="nav.projects" /> },
+    { to: "/workers", label: <Trans id="nav.workers" /> },
+  ];
 
 export const TopNav: FC = () => {
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
-
-  const tabs = [
-    { to: "/projects", label: "nav.projects" },
-    { to: "/workers", label: "nav.workers" },
-  ] as const;
 
   return (
     <nav className="flex gap-4 border-b px-4">
@@ -25,7 +26,7 @@ export const TopNav: FC = () => {
               : "border-transparent text-muted-foreground hover:text-foreground",
           )}
         >
-          <Trans id={tab.label} />
+          {tab.label}
         </Link>
       ))}
     </nav>
