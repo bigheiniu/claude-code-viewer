@@ -410,3 +410,16 @@ export const fileContentQuery = (projectId: string, filePath: string) =>
       return await response.json();
     },
   }) as const;
+
+export const workerListQuery = {
+  queryKey: ["workers"],
+  queryFn: async () => {
+    const response = await honoClient.api.workers.$get();
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch workers: ${response.statusText}`);
+    }
+
+    return await response.json();
+  },
+} as const;
