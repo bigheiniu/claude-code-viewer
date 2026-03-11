@@ -25,6 +25,7 @@ import { schedulerRoutes } from "./schedulerRoutes";
 import { searchRoutes } from "./searchRoutes";
 import { sseRoutes } from "./sseRoutes";
 import { tasksRoutes } from "./tasksRoutes";
+import { workerRoutes } from "./workerRoutes";
 
 const API_ONLY_ALLOWED_PREFIXES = [
   "/api/version",
@@ -33,6 +34,7 @@ const API_ONLY_ALLOWED_PREFIXES = [
   "/api/claude-code",
   "/api/search",
   "/api/sse",
+  "/api/workers",
 ];
 
 const createApiOnlyMiddleware = (apiOnly: boolean) =>
@@ -129,6 +131,7 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
         .route("/api/feature-flags", yield* featureFlagRoutes)
         .route("/api/tasks", yield* tasksRoutes)
         .route("/api/sse", yield* sseRoutes)
+        .route("/api/workers", yield* workerRoutes)
     );
   });
 

@@ -8,6 +8,7 @@ import type { ProjectRepository } from "../core/project/infrastructure/ProjectRe
 import type { SchedulerConfigBaseDir } from "../core/scheduler/config";
 import type { VirtualConversationDatabase } from "../core/session/infrastructure/VirtualConversationDatabase";
 import type { SessionMetaService } from "../core/session/services/SessionMetaService";
+import type { WorkerRegistry } from "../core/worker/infrastructure/WorkerRegistry";
 
 export type HonoRuntime =
   | CcvOptionsService
@@ -20,6 +21,7 @@ export type HonoRuntime =
   | UserConfigService
   | ClaudeCodeLifeCycleService
   | ProjectRepository
-  | SchedulerConfigBaseDir;
+  | SchedulerConfigBaseDir
+  | WorkerRegistry;
 
 export const getHonoRuntime = Effect.runtime<HonoRuntime>();

@@ -37,6 +37,10 @@ import { SessionMetaService } from "./core/session/services/SessionMetaService";
 import { TasksController } from "./core/tasks/presentation/TasksController";
 import { TasksService } from "./core/tasks/services/TasksService";
 import { TerminalService } from "./core/terminal/TerminalService";
+import { WorkerRegistry } from "./core/worker/infrastructure/WorkerRegistry";
+import { WorkerController } from "./core/worker/presentation/WorkerController";
+import { WorkerDispatchService } from "./core/worker/services/WorkerDispatchService";
+import { WorkerStatusService } from "./core/worker/services/WorkerStatusService";
 import { honoApp } from "./hono/app";
 import { InitializeService } from "./hono/initialize";
 import { AuthMiddleware } from "./hono/middleware/auth.middleware";
@@ -116,7 +120,9 @@ const InfraRepos = Layer.mergeAll(
   SessionRepository.Live,
 ).pipe(Layer.provideMerge(InfraBasics));
 
-const InfraLayer = AgentSessionLayer.pipe(Layer.provideMerge(InfraRepos));
+const InfraLayer = Layer.mergeAll(AgentSessionLayer, WorkerRegistry.Live).pipe(
+  Layer.provideMerge(InfraRepos),
+);
 
 const DomainBase = Layer.mergeAll(
   ClaudeCodePermissionService.Live,
@@ -138,6 +144,8 @@ const AppServices = Layer.mergeAll(
   RateLimitAutoScheduleService.Live,
   AuthMiddleware.Live,
   TerminalService.Live,
+  WorkerStatusService.Live,
+  WorkerDispatchService.Live,
 );
 
 const ApplicationLayer = InitializeService.Live.pipe(
@@ -158,6 +166,7 @@ const PresentationLayer = Layer.mergeAll(
   FeatureFlagController.Live,
   SearchController.Live,
   TasksController.Live,
+  WorkerController.Live,
 );
 
 const MainLayer = PresentationLayer.pipe(
