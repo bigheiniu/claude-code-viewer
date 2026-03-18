@@ -24,6 +24,71 @@ import type { PermissionMode, ProjectSession } from "../types";
 import { generateShortTitle } from "../utils";
 import { TerminalEmbed } from "./TerminalEmbed";
 
+// --- Status indicator ---
+const StatusIndicator: FC<{
+  status: ProjectSession["status"];
+  compact?: boolean;
+}> = ({ status, compact }) => {
+  if (status === "running") {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="flex items-center gap-1">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+            </span>
+            {!compact && (
+              <span className="text-[9px] font-medium text-green-600 dark:text-green-400">
+                Running
+              </span>
+            )}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          Session is actively running
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+  if (status === "paused") {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="flex items-center gap-1">
+            <span className="inline-flex rounded-full h-2 w-2 bg-yellow-500" />
+            {!compact && (
+              <span className="text-[9px] font-medium text-yellow-600 dark:text-yellow-400">
+                Paused
+              </span>
+            )}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          Waiting for permission or user input
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="flex items-center gap-1">
+          <span className="inline-flex rounded-full h-2 w-2 bg-muted-foreground/30" />
+          {!compact && (
+            <span className="text-[9px] font-medium text-muted-foreground/60">
+              Idle
+            </span>
+          )}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs">
+        No active process
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
 // --- Collapsed preview card ---
 const CollapsedCard: FC<{
   session: ProjectSession;
@@ -73,6 +138,7 @@ const CollapsedCard: FC<{
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
+              <StatusIndicator status={session.status} />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="text-xs font-semibold font-mono break-words whitespace-normal">
@@ -86,22 +152,6 @@ const CollapsedCard: FC<{
                   {session.title}
                 </TooltipContent>
               </Tooltip>
-              {session.status === "running" && (
-                <Badge
-                  variant="secondary"
-                  className="h-4 px-1.5 text-[9px] bg-green-500/15 text-green-600 dark:text-green-400"
-                >
-                  Running
-                </Badge>
-              )}
-              {session.status === "paused" && (
-                <Badge
-                  variant="secondary"
-                  className="h-4 px-1.5 text-[9px] bg-yellow-500/15 text-yellow-600 dark:text-yellow-400"
-                >
-                  Paused
-                </Badge>
-              )}
             </div>
             {session.firstUserMessage && (
               <p className="text-[10px] text-muted-foreground break-words whitespace-normal leading-relaxed">
@@ -424,6 +474,7 @@ export const SessionCard: FC<{
 
           {/* Compact header */}
           <div className="flex items-center gap-2 px-2 py-1.5 border-b border-border/40 bg-muted/30 flex-shrink-0">
+            <StatusIndicator status={session.status} compact />
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="text-[10px] font-semibold truncate flex-1">
@@ -437,9 +488,6 @@ export const SessionCard: FC<{
                 {session.title}
               </TooltipContent>
             </Tooltip>
-            {session.status === "running" && (
-              <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
-            )}
             <Link
               to="/projects/$projectId/session"
               params={{ projectId: session.projectId }}
