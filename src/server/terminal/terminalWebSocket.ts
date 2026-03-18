@@ -107,8 +107,20 @@ export const setupTerminalWebSocket = (server: ServerType) =>
           : undefined;
       const cwdParam = url.searchParams.get("cwd");
       const cwd = cwdParam && cwdParam.length > 0 ? cwdParam : undefined;
+      const commandParam = url.searchParams.get("command");
+      const argsParam = url.searchParams.get("args");
 
-      runPromise(terminalService.getOrCreateSession(requestedSessionId, cwd))
+      const sessionEffect =
+        commandParam && commandParam.length > 0 && cwd
+          ? terminalService.createCommandSession({
+              terminalSessionId: requestedSessionId,
+              cwd,
+              command: commandParam,
+              args: argsParam ? argsParam.split(",") : [],
+            })
+          : terminalService.getOrCreateSession(requestedSessionId, cwd);
+
+      runPromise(sessionEffect)
         .then((session) => {
           sendJson(ws, {
             type: "hello",

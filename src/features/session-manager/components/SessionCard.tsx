@@ -1,46 +1,28 @@
-import { Trans } from "@lingui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
   AlertCircleIcon,
   ExternalLinkIcon,
-  LoaderIcon,
   RefreshCwIcon,
-  SendIcon,
   ShieldAlertIcon,
   ShieldCheckIcon,
   XIcon,
 } from "lucide-react";
-import {
-  type FC,
-  memo,
-  Suspense,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type FC, memo, Suspense, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { toast } from "sonner";
-import { ConversationList } from "@/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList";
-import { ContinueChat } from "@/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ContinueChat";
 import { useSession } from "@/app/projects/[projectId]/sessions/[sessionId]/hooks/useSession";
-import { useSessionProcess } from "@/app/projects/[projectId]/sessions/[sessionId]/hooks/useSessionProcess";
 import { Loading } from "@/components/Loading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { honoClient } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import type { PermissionMode, ProjectSession } from "../types";
 import { generateShortTitle } from "../utils";
-
-const MAX_VISIBLE = 30;
+import { TerminalEmbed } from "./TerminalEmbed";
 
 // --- Collapsed preview card ---
 const CollapsedCard: FC<{
@@ -215,232 +197,6 @@ const CollapsedCard: FC<{
             Open
           </Link>
         </div>
-      </div>
-    </div>
-  );
-};
-
-// --- Inline resume chat (no navigation on success) ---
-const InlineResumeChat: FC<{
-  projectId: string;
-  sessionId: string;
-}> = ({ projectId, sessionId }) => {
-  const [message, setMessage] = useState("");
-  const queryClient = useQueryClient();
-  const resumeMutation = useMutation({
-    mutationFn: async (text: string) => {
-      const response = await honoClient.api["claude-code"][
-        "session-processes"
-      ].$post(
-        {
-          json: {
-            projectId,
-            baseSession: { type: "resume", sessionId },
-            input: { text },
-          },
-        },
-        { init: { signal: AbortSignal.timeout(60 * 1000) } },
-      );
-      if (!response.ok) throw new Error(response.statusText);
-      return response.json();
-    },
-    onSuccess: () => {
-      setMessage("");
-      // Invalidate session query to refresh conversation list immediately
-      queryClient.invalidateQueries({
-        queryKey: ["projects", projectId, "sessions", sessionId],
-      });
-    },
-    onError: (error) => {
-      toast.error(
-        `Failed to resume session: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
-    },
-  });
-
-  const handleSubmit = () => {
-    const text = message.trim();
-    if (!text || resumeMutation.isPending) return;
-    resumeMutation.mutate(text);
-  };
-
-  return (
-    <div className="flex items-end gap-1.5 p-2">
-      <Textarea
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        placeholder="Resume session..."
-        className="min-h-[32px] max-h-[80px] text-xs resize-none"
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            handleSubmit();
-          }
-        }}
-      />
-      <Button
-        size="sm"
-        className="h-8 w-8 p-0 flex-shrink-0"
-        onClick={handleSubmit}
-        disabled={!message.trim() || resumeMutation.isPending}
-      >
-        {resumeMutation.isPending ? (
-          <LoaderIcon className="h-3.5 w-3.5 animate-spin" />
-        ) : (
-          <SendIcon className="h-3.5 w-3.5" />
-        )}
-      </Button>
-    </div>
-  );
-};
-
-// --- Expanded inline chat content (loaded via Suspense) ---
-const ExpandedChatContent: FC<{
-  projectId: string;
-  sessionId: string;
-}> = ({ projectId, sessionId }) => {
-  const { getSessionProcess } = useSessionProcess();
-  const relatedProcess = useMemo(
-    () => getSessionProcess(sessionId),
-    [getSessionProcess, sessionId],
-  );
-  const sessionData = useSession(projectId, sessionId, {
-    isRunning: relatedProcess?.status === "running",
-  });
-  const rawConversations = sessionData?.conversations ?? [];
-  const getToolResult = sessionData?.getToolResult ?? (() => undefined);
-
-  // Filter out consecutive duplicate file-history-snapshot entries to reduce clutter.
-  // From each consecutive group, only the last entry is kept.
-  const conversations = useMemo(() => {
-    return rawConversations.filter((entry, index) => {
-      if (!("type" in entry) || entry.type !== "file-history-snapshot") {
-        return true;
-      }
-      const next = rawConversations[index + 1];
-      // Keep this snapshot only if the next entry is NOT also a file-history-snapshot
-      return !(next && "type" in next && next.type === "file-history-snapshot");
-    });
-  }, [rawConversations]);
-
-  const [showAll, setShowAll] = useState(false);
-  const visibleConversations = useMemo(() => {
-    if (showAll || conversations.length <= MAX_VISIBLE) return conversations;
-    // Show the LAST MAX_VISIBLE messages (most recent are most relevant)
-    return conversations.slice(-MAX_VISIBLE);
-  }, [conversations, showAll]);
-
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const hasScrolledOnMount = useRef(false);
-  const [prevLength, setPrevLength] = useState(0);
-
-  const isRunning = relatedProcess?.status === "running";
-
-  const abortTask = useMutation({
-    mutationFn: async (sessionProcessId: string) => {
-      const response = await honoClient.api["claude-code"]["session-processes"][
-        ":sessionProcessId"
-      ].abort.$post({
-        param: { sessionProcessId },
-        json: { projectId },
-      });
-      if (!response.ok) throw new Error(response.statusText);
-      return response.json();
-    },
-  });
-
-  // Scroll to bottom on initial mount so the user sees the most recent messages
-  useEffect(() => {
-    if (hasScrolledOnMount.current) return;
-    if (conversations.length === 0) return;
-    hasScrolledOnMount.current = true;
-    requestAnimationFrame(() => {
-      const el = scrollContainerRef.current;
-      if (el) {
-        el.scrollTo({ top: el.scrollHeight });
-      }
-    });
-  }, [conversations.length]);
-
-  // Auto-scroll on new messages while running, but only if user is near bottom
-  useEffect(() => {
-    if (isRunning && conversations.length !== prevLength) {
-      setPrevLength(conversations.length);
-      const el = scrollContainerRef.current;
-      if (el) {
-        const isNearBottom =
-          el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-        if (isNearBottom) {
-          el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-        }
-      }
-    }
-  }, [conversations.length, isRunning, prevLength]);
-
-  return (
-    <div className="flex flex-col h-full min-h-0">
-      {/* Inline status bar */}
-      {isRunning && relatedProcess && (
-        <div className="flex items-center gap-2 px-2 py-1 bg-green-500/5 border-b border-border/30">
-          <LoaderIcon className="w-3 h-3 animate-spin text-green-500" />
-          <span className="text-[10px] text-green-600 dark:text-green-400 font-medium">
-            <Trans id="session.status.running" />
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-5 px-1.5 text-[10px] ml-auto text-destructive hover:text-destructive"
-            onClick={() => abortTask.mutate(relatedProcess.id)}
-            disabled={abortTask.isPending}
-          >
-            <Trans id="session.conversation.abort" />
-          </Button>
-        </div>
-      )}
-
-      {/* Scrollable conversation */}
-      <div
-        ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto min-h-0 px-2"
-      >
-        {!showAll && conversations.length > MAX_VISIBLE && (
-          <button
-            type="button"
-            className="w-full py-2 text-xs text-muted-foreground hover:text-foreground transition-colors border-b border-border/30"
-            onClick={() => setShowAll(true)}
-          >
-            Show {conversations.length - MAX_VISIBLE} earlier messages
-          </button>
-        )}
-        <ConversationList
-          conversations={visibleConversations}
-          getToolResult={getToolResult}
-          projectId={projectId}
-          sessionId={sessionId}
-          scheduledJobs={[]}
-        />
-        {isRunning && (
-          <div className="flex items-center gap-2 py-3">
-            <LoaderIcon className="w-4 h-4 animate-spin text-primary" />
-            <span className="text-xs text-muted-foreground animate-pulse">
-              <Trans id="session.processing" />
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Chat input */}
-      <div className="flex-shrink-0 border-t border-border/30 bg-background/95">
-        {relatedProcess ? (
-          <ContinueChat
-            projectId={projectId}
-            sessionId={sessionId}
-            sessionProcessId={relatedProcess.id}
-            sessionProcessStatus={relatedProcess.status}
-          />
-        ) : (
-          <InlineResumeChat projectId={projectId} sessionId={sessionId} />
-        )}
       </div>
     </div>
   );
@@ -703,15 +459,13 @@ export const SessionCard: FC<{
             </Button>
           </div>
 
-          {/* Inline chat */}
-          <div className="flex-1 min-h-0">
+          {/* Terminal */}
+          <div className="flex-1 min-h-0 bg-[#0a0a0a]">
             <ErrorBoundary FallbackComponent={CardErrorFallback}>
-              <Suspense fallback={<Loading />}>
-                <ExpandedChatContent
-                  projectId={session.projectId}
-                  sessionId={session.sessionId}
-                />
-              </Suspense>
+              <TerminalEmbed
+                cwd={projectPath}
+                claudeSessionId={session.sessionId}
+              />
             </ErrorBoundary>
           </div>
         </div>

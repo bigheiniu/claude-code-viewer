@@ -1103,7 +1103,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList.tsx",
-        119
+        125
       ]
     ],
     "translation": "Raw Data: "
@@ -1114,7 +1114,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList.tsx",
-        112
+        118
       ]
     ],
     "translation": "Report This Issue"
@@ -1125,7 +1125,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList.tsx",
-        87
+        93
       ]
     ],
     "translation": "Schema Error"
@@ -1136,7 +1136,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList.tsx",
-        102
+        108
       ]
     ],
     "translation": "Schema Validation Error"
@@ -1147,7 +1147,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList.tsx",
-        105
+        111
       ]
     ],
     "translation": "Failed to parse this conversation entry. This may be due to format changes or parsing issues."
@@ -1752,7 +1752,6 @@
     "translation": "MCP Servers"
   },
   "nav.projects": {
-    "translation": "Projects",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -1760,10 +1759,10 @@
         "src/app/workers/components/TopNav.tsx",
         8
       ]
-    ]
+    ],
+    "translation": "Projects"
   },
   "nav.workers": {
-    "translation": "Workers",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -1771,7 +1770,8 @@
         "src/app/workers/components/TopNav.tsx",
         9
       ]
-    ]
+    ],
+    "translation": "Workers"
   },
   "notfound.button.go_home": {
     "placeholders": {},
@@ -2175,7 +2175,7 @@
     "origin": [
       [
         "src/app/projects/page.tsx",
-        15
+        18
       ]
     ],
     "translation": "View Claude Code conversation history and project operations"
@@ -2186,7 +2186,7 @@
     "origin": [
       [
         "src/app/projects/page.tsx",
-        31
+        42
       ]
     ],
     "translation": "Loading projects..."
@@ -2197,7 +2197,7 @@
     "origin": [
       [
         "src/app/projects/page.tsx",
-        23
+        26
       ]
     ],
     "translation": "Projects"
@@ -2581,37 +2581,71 @@
   "session-manager.all-sessions": {
     "placeholders": {},
     "comments": [],
-    "origin": [],
+    "origin": [
+      [
+        "src/features/session-manager/components/CanvasHeader.tsx",
+        33
+      ]
+    ],
     "translation": "All Sessions"
   },
   "session-manager.clear": {
     "placeholders": {},
     "comments": [],
-    "origin": [],
+    "origin": [
+      [
+        "src/features/session-manager/components/ProjectSidebar.tsx",
+        169
+      ]
+    ],
     "translation": "Clear"
   },
   "session-manager.empty-tab": {
     "placeholders": {},
     "comments": [],
-    "origin": [],
+    "origin": [
+      [
+        "src/features/session-manager/components/SessionGrid.tsx",
+        156
+      ]
+    ],
     "translation": "No sessions in this tab"
   },
   "session-manager.empty-tab-hint": {
     "placeholders": {},
     "comments": [],
-    "origin": [],
+    "origin": [
+      [
+        "src/features/session-manager/components/SessionGrid.tsx",
+        159
+      ]
+    ],
     "translation": "Select sessions from the sidebar and click '+ Tab' to add them"
   },
   "session-manager.select-all": {
     "placeholders": {},
     "comments": [],
-    "origin": [],
+    "origin": [
+      [
+        "src/features/session-manager/components/ProjectSidebar.tsx",
+        161
+      ]
+    ],
     "translation": "Select All"
   },
   "session-manager.title": {
     "placeholders": {},
     "comments": [],
-    "origin": [],
+    "origin": [
+      [
+        "src/app/projects/page.tsx",
+        32
+      ],
+      [
+        "src/features/session-manager/components/ProjectSidebar.tsx",
+        91
+      ]
+    ],
     "translation": "Session Manager"
   },
   "session.conversation.abort": {
@@ -2621,6 +2655,10 @@
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
         126
+      ],
+      [
+        "src/features/session-manager/components/SessionCard.tsx",
+        396
       ]
     ],
     "translation": "Abort"
@@ -2796,6 +2834,10 @@
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
         668
+      ],
+      [
+        "src/features/session-manager/components/SessionCard.tsx",
+        426
       ]
     ],
     "translation": "Claude Code is processing..."
@@ -2867,6 +2909,10 @@
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionsTab.tsx",
         154
+      ],
+      [
+        "src/features/session-manager/components/SessionCard.tsx",
+        387
       ]
     ],
     "translation": "Running"

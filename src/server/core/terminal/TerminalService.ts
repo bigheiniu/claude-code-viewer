@@ -63,10 +63,17 @@ const LayerImpl = Effect.gen(function* () {
   const sessions = new Map<string, TerminalSession>();
 
   const disabledService = (reason: string) => {
-    const getOrCreateSession = (_sessionId?: string, _cwdOverride?: string) =>
+    const unavailable = () =>
       Effect.fail(new Error(`Terminal support is unavailable (${reason}).`));
     return {
-      getOrCreateSession,
+      getOrCreateSession: (_sessionId?: string, _cwdOverride?: string) =>
+        unavailable(),
+      createCommandSession: (_options: {
+        terminalSessionId?: string;
+        cwd: string;
+        command: string;
+        args: string[];
+      }) => unavailable(),
       registerClient: () => Effect.void,
       unregisterClient: () => Effect.void,
       writeInput: () => Effect.void,
@@ -218,10 +225,7 @@ const LayerImpl = Effect.gen(function* () {
     return sessions.get(sessionId);
   };
 
-  const getOrCreateSession = (
-    sessionId: string | undefined,
-    cwdOverride?: string,
-  ) =>
+  const checkTerminalEnabled = () =>
     Effect.gen(function* () {
       const terminalDisabledEnv = yield* envService.getEnv(
         "CCV_TERMINAL_DISABLED",
@@ -237,6 +241,14 @@ const LayerImpl = Effect.gen(function* () {
           ),
         );
       }
+    });
+
+  const getOrCreateSession = (
+    sessionId: string | undefined,
+    cwdOverride?: string,
+  ) =>
+    Effect.gen(function* () {
+      yield* checkTerminalEnabled();
       const cwd = cwdOverride ?? process.cwd();
       const terminalShellOption =
         yield* ccvOptionsService.getCcvOptions("terminalShell");
@@ -264,6 +276,70 @@ const LayerImpl = Effect.gen(function* () {
         unrestrictedFlag,
         env,
       });
+    });
+
+  const createCommandSession = (options: {
+    terminalSessionId?: string;
+    cwd: string;
+    command: string;
+    args: string[];
+  }) =>
+    Effect.gen(function* () {
+      yield* checkTerminalEnabled();
+      const existing = getSession(options.terminalSessionId);
+      if (existing) {
+        existing.lastActivity = Date.now();
+        return existing;
+      }
+      pruneSessions();
+      const env = yield* envService.getAllEnv();
+      const id = options.terminalSessionId ?? ulid();
+      const { process: ptyProcess, read } = createRusptySession(ruspty, {
+        command: options.command,
+        args: options.args,
+        envs: env,
+        dir: options.cwd,
+        size: { cols: DEFAULT_COLS, rows: DEFAULT_ROWS },
+        onExit: (_error, exitCode) => {
+          const current = sessions.get(id);
+          if (!current) return;
+          current.exited = true;
+          current.lastActivity = Date.now();
+          broadcast(current, { type: "exit", code: exitCode });
+          if (current.clients.size === 0) {
+            destroySession(current.id);
+          }
+        },
+      });
+      const session: TerminalSession = {
+        id,
+        pty: ptyProcess,
+        seq: 0,
+        buffer: [],
+        bufferBytes: 0,
+        lastActivity: Date.now(),
+        clients: new Set<WebSocket>(),
+        exited: false,
+        inputBuffer: "",
+      };
+      read.on("data", (chunk: unknown) => {
+        const data = normalizePtyChunk(chunk);
+        if (data === null) return;
+        const current = sessions.get(session.id);
+        if (!current || current.exited) return;
+        current.lastActivity = Date.now();
+        current.seq += 1;
+        current.buffer.push({ seq: current.seq, data });
+        current.bufferBytes += Buffer.byteLength(data, "utf8");
+        trimBuffer(current);
+        broadcast(current, {
+          type: "output",
+          seq: current.seq,
+          data,
+        });
+      });
+      sessions.set(id, session);
+      return session;
     });
 
   const registerClient = (sessionId: string, client: WebSocket) =>
@@ -344,6 +420,7 @@ const LayerImpl = Effect.gen(function* () {
 
   return {
     getOrCreateSession,
+    createCommandSession,
     registerClient,
     unregisterClient,
     writeInput,
