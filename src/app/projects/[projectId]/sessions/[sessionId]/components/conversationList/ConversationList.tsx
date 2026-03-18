@@ -1,7 +1,13 @@
 import { Trans } from "@lingui/react";
-import { AlertTriangle, ChevronDown, ExternalLink } from "lucide-react";
-import { type FC, useCallback, useMemo } from "react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+} from "lucide-react";
+import { type FC, useCallback, useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
@@ -130,6 +136,26 @@ const SchemaErrorDisplay: FC<{ errorLine: string }> = ({ errorLine }) => {
     </li>
   );
 };
+
+const getUserMessagePreview = (conv: Conversation | ErrorJsonl): string => {
+  if (conv.type !== "user") return "...";
+  const content = conv.message.content;
+  if (typeof content === "string") return content.slice(0, 80);
+  for (const item of content) {
+    if (typeof item === "string") return item.slice(0, 80);
+    if ("text" in item && typeof item.text === "string")
+      return item.text.slice(0, 80);
+  }
+  return "...";
+};
+
+interface Turn {
+  turnIndex: number;
+  entries: {
+    conversation: Conversation | ErrorJsonl;
+    showTimestamp: boolean;
+  }[];
+}
 
 type ConversationListProps = {
   conversations: (Conversation | ErrorJsonl)[];
@@ -345,12 +371,73 @@ export const ConversationList: FC<ConversationListProps> = ({
     });
   }, [conversations, shouldRenderConversation]);
 
+  // Group entries into turns: a turn starts with a user message and includes
+  // all following non-user messages until the next user message.
+  const turns = useMemo(() => {
+    const result: Turn[] = [];
+    let currentTurn: Turn | null = null;
+    let turnIndex = 0;
+
+    for (const entry of conversationsWithTimestamp) {
+      const conv = entry.conversation;
+      if (conv.type !== "x-error" && !shouldRenderConversation(conv)) continue;
+
+      const isUserMessage = conv.type === "user";
+      if (isUserMessage || currentTurn === null) {
+        currentTurn = { turnIndex: turnIndex++, entries: [] };
+        result.push(currentTurn);
+      }
+      currentTurn.entries.push(entry);
+    }
+    return result;
+  }, [conversationsWithTimestamp, shouldRenderConversation]);
+
+  const [collapsedTurns, setCollapsedTurns] = useState<Set<number>>(new Set());
+  const toggleTurn = useCallback((turnIndex: number) => {
+    setCollapsedTurns((prev) => {
+      const next = new Set(prev);
+      if (next.has(turnIndex)) next.delete(turnIndex);
+      else next.add(turnIndex);
+      return next;
+    });
+  }, []);
+
   return (
     <>
       <ul>
-        {conversationsWithTimestamp.flatMap(
-          ({ conversation, showTimestamp }) => {
-            if (!shouldRenderConversation(conversation)) {
+        {turns.flatMap((turn) => {
+          const isCollapsed = collapsedTurns.has(turn.turnIndex);
+
+          if (isCollapsed) {
+            const firstEntry = turn.entries[0];
+            if (firstEntry === undefined) return [];
+            const userPreview = getUserMessagePreview(firstEntry.conversation);
+            return [
+              <li
+                className="w-full flex justify-end"
+                key={`turn-collapsed-${turn.turnIndex.toString()}`}
+              >
+                <div className="w-full max-w-3xl lg:max-w-4xl sm:w-[90%] md:w-[85%]">
+                  <button
+                    type="button"
+                    onClick={() => toggleTurn(turn.turnIndex)}
+                    className="flex items-center gap-2 w-full px-2 py-1.5 rounded hover:bg-muted/50 text-left group"
+                  >
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs text-muted-foreground truncate flex-1">
+                      {userPreview}
+                    </span>
+                    <Badge variant="secondary" className="text-[9px] h-4 px-1">
+                      {turn.entries.length}
+                    </Badge>
+                  </button>
+                </div>
+              </li>,
+            ];
+          }
+
+          return turn.entries.flatMap(
+            ({ conversation, showTimestamp }, entryIndex) => {
               if (conversation.type === "x-error") {
                 return (
                   <SchemaErrorDisplay
@@ -359,75 +446,80 @@ export const ConversationList: FC<ConversationListProps> = ({
                   />
                 );
               }
-              return [];
-            }
 
-            if (conversation.type === "x-error") {
-              return (
-                <SchemaErrorDisplay
-                  key={`error_${conversation.line}`}
-                  errorLine={conversation.line}
+              if (!shouldRenderConversation(conversation)) {
+                return [];
+              }
+
+              const elm = (
+                <ConversationItem
+                  key={getConversationKey(conversation)}
+                  conversation={conversation}
+                  getToolResult={getToolResult}
+                  getAgentIdForToolUse={getAgentIdForToolUse}
+                  getTurnDuration={getTurnDuration}
+                  isRootSidechain={isRootSidechain}
+                  getSidechainConversations={getSidechainConversations}
+                  getSidechainConversationByAgentId={
+                    getSidechainConversationByAgentId
+                  }
+                  getSidechainConversationByPrompt={
+                    getSidechainConversationByPrompt
+                  }
+                  existsRelatedTaskCall={existsRelatedTaskCall}
+                  projectId={projectId}
+                  sessionId={sessionId}
+                  showTimestamp={showTimestamp}
                 />
               );
-            }
 
-            const elm = (
-              <ConversationItem
-                key={getConversationKey(conversation)}
-                conversation={conversation}
-                getToolResult={getToolResult}
-                getAgentIdForToolUse={getAgentIdForToolUse}
-                getTurnDuration={getTurnDuration}
-                isRootSidechain={isRootSidechain}
-                getSidechainConversations={getSidechainConversations}
-                getSidechainConversationByAgentId={
-                  getSidechainConversationByAgentId
-                }
-                getSidechainConversationByPrompt={
-                  getSidechainConversationByPrompt
-                }
-                existsRelatedTaskCall={existsRelatedTaskCall}
-                projectId={projectId}
-                sessionId={sessionId}
-                showTimestamp={showTimestamp}
-              />
-            );
+              const isLocalCommandOutput =
+                conversation.type === "user" &&
+                typeof conversation.message.content === "string" &&
+                parseUserMessage(conversation.message.content).kind ===
+                  "local-command";
 
-            const isLocalCommandOutput =
-              conversation.type === "user" &&
-              typeof conversation.message.content === "string" &&
-              parseUserMessage(conversation.message.content).kind ===
-                "local-command";
+              const isSidechain =
+                conversation.type !== "summary" &&
+                conversation.type !== "file-history-snapshot" &&
+                conversation.type !== "queue-operation" &&
+                conversation.type !== "progress" &&
+                conversation.type !== "custom-title" &&
+                conversation.type !== "agent-name" &&
+                conversation.isSidechain;
 
-            const isSidechain =
-              conversation.type !== "summary" &&
-              conversation.type !== "file-history-snapshot" &&
-              conversation.type !== "queue-operation" &&
-              conversation.type !== "progress" &&
-              conversation.type !== "custom-title" &&
-              conversation.type !== "agent-name" &&
-              conversation.isSidechain;
+              const isFirstEntry = entryIndex === 0;
 
-            return [
-              <li
-                className={`w-full flex ${
-                  isSidechain ||
-                  isLocalCommandOutput ||
-                  conversation.type === "assistant" ||
-                  conversation.type === "system" ||
-                  conversation.type === "summary"
-                    ? "justify-start"
-                    : "justify-end"
-                } animate-in fade-in slide-in-from-bottom-2 duration-300`}
-                key={getConversationKey(conversation)}
-              >
-                <div className="w-full max-w-3xl lg:max-w-4xl sm:w-[90%] md:w-[85%]">
-                  {elm}
-                </div>
-              </li>,
-            ];
-          },
-        )}
+              return [
+                <li
+                  className={`w-full flex ${
+                    isSidechain ||
+                    isLocalCommandOutput ||
+                    conversation.type === "assistant" ||
+                    conversation.type === "system" ||
+                    conversation.type === "summary"
+                      ? "justify-start"
+                      : "justify-end"
+                  } animate-in fade-in slide-in-from-bottom-2 duration-300`}
+                  key={getConversationKey(conversation)}
+                >
+                  <div className="w-full max-w-3xl lg:max-w-4xl sm:w-[90%] md:w-[85%] relative group/turn">
+                    {isFirstEntry && (
+                      <button
+                        type="button"
+                        onClick={() => toggleTurn(turn.turnIndex)}
+                        className="absolute -left-5 top-2 opacity-0 group-hover/turn:opacity-60 hover:!opacity-100 transition-opacity"
+                      >
+                        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                      </button>
+                    )}
+                    {elm}
+                  </div>
+                </li>,
+              ];
+            },
+          );
+        })}
       </ul>
       <ScheduledMessageNotice scheduledJobs={scheduledJobs} />
     </>

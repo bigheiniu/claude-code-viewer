@@ -70,6 +70,27 @@ export function filterProjects<T extends FilterableProject>(
     .filter((p): p is NonNullable<typeof p> => p !== null);
 }
 
+/**
+ * Generate a short title (max ~8 words) from a session's first user message or title.
+ * Truncates intelligently at word boundaries.
+ */
+export function generateShortTitle(
+  text: string | null | undefined,
+  maxWords = 8,
+): string {
+  if (!text) return "Untitled Session";
+
+  // Take first line only (messages often have multi-line content)
+  const firstLine = (text.split("\n")[0] ?? text).trim();
+  if (!firstLine) return "Untitled Session";
+
+  // Split into words and take first maxWords
+  const words = firstLine.split(/\s+/).filter((w) => w.length > 0);
+  if (words.length <= maxWords) return firstLine;
+
+  return `${words.slice(0, maxWords).join(" ")}...`;
+}
+
 export function makeCompositeId(projectId: string, sessionId: string): string {
   return `${projectId}::${sessionId}`;
 }

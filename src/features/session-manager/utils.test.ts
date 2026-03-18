@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   filterProjects,
+  generateShortTitle,
   getProjectColor,
   getProjectDisplayName,
   makeCompositeId,
@@ -69,6 +70,40 @@ describe("filterProjects", () => {
   test("is case insensitive", () => {
     const result = filterProjects(projects, "ACME");
     expect(result).toHaveLength(1);
+  });
+});
+
+describe("generateShortTitle", () => {
+  test("returns 'Untitled Session' for null/undefined/empty input", () => {
+    expect(generateShortTitle(null)).toBe("Untitled Session");
+    expect(generateShortTitle(undefined)).toBe("Untitled Session");
+    expect(generateShortTitle("")).toBe("Untitled Session");
+  });
+
+  test("returns full text when within maxWords", () => {
+    expect(generateShortTitle("Fix the login bug")).toBe("Fix the login bug");
+  });
+
+  test("truncates at word boundary and adds ellipsis", () => {
+    const long =
+      "Help me build a complex web application with authentication and database integration";
+    const result = generateShortTitle(long);
+    expect(result).toBe("Help me build a complex web application with...");
+    expect(result.split(/\s+/).length).toBeLessThanOrEqual(9); // 8 words + ellipsis token
+  });
+
+  test("uses only the first line of multi-line input", () => {
+    const multiline = "First line title\nSecond line with more details";
+    expect(generateShortTitle(multiline)).toBe("First line title");
+  });
+
+  test("respects custom maxWords parameter", () => {
+    const text = "one two three four five six";
+    expect(generateShortTitle(text, 3)).toBe("one two three...");
+  });
+
+  test("handles whitespace-only first line", () => {
+    expect(generateShortTitle("   \nsome content")).toBe("Untitled Session");
   });
 });
 

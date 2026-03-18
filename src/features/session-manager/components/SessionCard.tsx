@@ -30,6 +30,7 @@ import {
 import { honoClient } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import type { PermissionMode, ProjectSession } from "../types";
+import { generateShortTitle } from "../utils";
 
 // --- Collapsed preview card ---
 const CollapsedCard: FC<{
@@ -80,9 +81,19 @@ const CollapsedCard: FC<{
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="text-xs font-semibold font-mono break-words whitespace-normal">
-                {session.title}
-              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-xs font-semibold font-mono break-words whitespace-normal">
+                    {generateShortTitle(session.title)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
+                  className="max-w-xs text-xs whitespace-pre-wrap"
+                >
+                  {session.title}
+                </TooltipContent>
+              </Tooltip>
               {session.status === "running" && (
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
               )}
@@ -605,9 +616,19 @@ export const SessionCard: FC<{
 
         {/* Compact header */}
         <div className="flex items-center gap-2 px-2 py-1.5 border-b border-border/40 bg-muted/30 flex-shrink-0">
-          <span className="text-[10px] font-semibold truncate flex-1">
-            {session.title}
-          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-[10px] font-semibold truncate flex-1">
+                {generateShortTitle(session.title)}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              className="max-w-xs text-xs whitespace-pre-wrap"
+            >
+              {session.title}
+            </TooltipContent>
+          </Tooltip>
           {session.status === "running" && (
             <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
           )}
