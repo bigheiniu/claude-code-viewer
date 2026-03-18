@@ -2556,6 +2556,42 @@
     ],
     "translation": "スケジューラ"
   },
+  "session-manager.all-sessions": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [],
+    "translation": "全セッション"
+  },
+  "session-manager.clear": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [],
+    "translation": "クリア"
+  },
+  "session-manager.empty-tab": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [],
+    "translation": "このタブにセッションはありません"
+  },
+  "session-manager.empty-tab-hint": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [],
+    "translation": "サイドバーからセッションを選択し、「+ Tab」をクリックして追加してください"
+  },
+  "session-manager.select-all": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [],
+    "translation": "すべて選択"
+  },
+  "session-manager.title": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [],
+    "translation": "セッションマネージャー"
+  },
   "session.conversation.abort": {
     "placeholders": {},
     "comments": [],
