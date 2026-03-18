@@ -1,5 +1,9 @@
 import { useCallback, useState } from "react";
-import type { PermissionMode, SessionManagerTab } from "../types";
+import type {
+  GridLayoutItem,
+  PermissionMode,
+  SessionManagerTab,
+} from "../types";
 import { useTabPersistence } from "./useTabPersistence";
 
 export function useSessionManager() {
@@ -12,6 +16,10 @@ export function useSessionManager() {
     setExpandedProjects,
     permissionOverrides,
     setPermissionOverrides,
+    getGridLayout,
+    setGridLayout,
+    getExpandedCards,
+    setExpandedCards,
   } = useTabPersistence();
 
   const [selectedSessions, setSelectedSessions] = useState<Set<string>>(
@@ -122,6 +130,13 @@ export function useSessionManager() {
     [activeTabId, tabs, setTabs],
   );
 
+  const renameTab = useCallback(
+    (tabId: string, newName: string) => {
+      setTabs(tabs.map((t) => (t.id === tabId ? { ...t, name: newName } : t)));
+    },
+    [tabs, setTabs],
+  );
+
   const getPermissionMode = useCallback(
     (compositeId: string): PermissionMode =>
       permissionOverrides[compositeId] ?? "default",
@@ -138,7 +153,37 @@ export function useSessionManager() {
     [permissionOverrides, setPermissionOverrides],
   );
 
+  const toggleCardExpanded = useCallback(
+    (compositeId: string) => {
+      const tabKey = activeTabId ?? "__no_tab__";
+      const currentCards = getExpandedCards(tabKey);
+      const cardSet = new Set(currentCards);
+      if (cardSet.has(compositeId)) {
+        cardSet.delete(compositeId);
+      } else {
+        cardSet.add(compositeId);
+      }
+      setExpandedCards(tabKey, Array.from(cardSet));
+    },
+    [activeTabId, getExpandedCards, setExpandedCards],
+  );
+
+  // Bug #4 fix: Use fallback key for no-tab view to persist layout
+  const updateGridLayout = useCallback(
+    (layout: GridLayoutItem[]) => {
+      const tabKey = activeTabId ?? "__no_tab__";
+      setGridLayout(tabKey, layout);
+    },
+    [activeTabId, setGridLayout],
+  );
+
+  const currentGridLayout = getGridLayout(activeTabId ?? "__no_tab__");
+
   const currentTab = tabs.find((t) => t.id === activeTabId);
+
+  // Derive expanded cards for current tab
+  const tabKey = activeTabId ?? "__no_tab__";
+  const expandedCards = new Set(getExpandedCards(tabKey));
 
   return {
     expandedProjects: new Set(expandedProjects),
@@ -158,7 +203,12 @@ export function useSessionManager() {
     closeTab,
     addToTab,
     removeFromTab,
+    renameTab,
     getPermissionMode,
     togglePermissionMode,
+    expandedCards,
+    toggleCardExpanded,
+    currentGridLayout,
+    updateGridLayout,
   };
 }

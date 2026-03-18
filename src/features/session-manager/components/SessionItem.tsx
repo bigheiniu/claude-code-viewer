@@ -1,5 +1,5 @@
 import { PlusIcon } from "lucide-react";
-import { type FC, useState } from "react";
+import type { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -22,8 +22,6 @@ export const SessionItem: FC<{
   onToggle,
   onAddToTab,
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
     <button
       type="button"
@@ -36,14 +34,14 @@ export const SessionItem: FC<{
           ? { borderLeft: `2px solid ${projectColor}` }
           : { borderLeft: "2px solid transparent" }
       }
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       onClick={onToggle}
     >
       <Checkbox
         checked={isSelected}
-        onCheckedChange={() => onToggle()}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
         className="h-3.5 w-3.5"
       />
       <div className="flex-1 min-w-0">
@@ -59,17 +57,27 @@ export const SessionItem: FC<{
           )}
         </div>
         <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
+          {session.status === "running" && (
+            <span className="text-green-600 dark:text-green-400 font-medium">
+              Running
+            </span>
+          )}
+          {session.status === "paused" && (
+            <span className="text-yellow-600 dark:text-yellow-400 font-medium">
+              Paused
+            </span>
+          )}
           <span>{session.messageCount} msgs</span>
           {session.lastModifiedAt && (
             <span>{new Date(session.lastModifiedAt).toLocaleDateString()}</span>
           )}
         </div>
       </div>
-      {isHovered && hasActiveTab && !isInActiveTab && (
+      {hasActiveTab && !isInActiveTab && (
         <Button
           variant="ghost"
           size="sm"
-          className="absolute right-1 top-1 h-5 px-1.5 text-[9px]"
+          className="absolute right-1 top-1 h-5 px-1.5 text-[9px] opacity-0 group-hover:opacity-100 transition-opacity"
           onClick={(e) => {
             e.stopPropagation();
             onAddToTab();

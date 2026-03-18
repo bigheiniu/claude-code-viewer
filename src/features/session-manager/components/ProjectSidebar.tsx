@@ -1,5 +1,6 @@
 import { Trans } from "@lingui/react";
-import { SearchIcon } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { SearchIcon, XIcon } from "lucide-react";
 import type { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,7 @@ export const ProjectSidebar: FC<{
         ...s,
         id: s.compositeId,
         title: s.title,
+        firstUserMessage: s.firstUserMessage,
       })),
     })),
     searchQuery,
@@ -65,7 +67,7 @@ export const ProjectSidebar: FC<{
   return (
     <div className="flex flex-col h-full border-r border-border bg-sidebar">
       <div className="p-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-2 mb-3">
+        <Link to="/" className="flex items-center gap-2 mb-3 no-underline">
           <div className="h-7 w-7 rounded-md bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
             C
           </div>
@@ -75,15 +77,25 @@ export const ProjectSidebar: FC<{
               <Trans id="session-manager.title" />
             </div>
           </div>
-        </div>
+        </Link>
         <div className="relative">
           <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search projects & sessions..."
-            className="pl-8 h-8 text-xs"
+            className="pl-8 pr-8 h-8 text-xs"
           />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+              onClick={() => onSearchChange("")}
+            >
+              <XIcon className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -93,20 +105,25 @@ export const ProjectSidebar: FC<{
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 pb-4">
-        {displayProjects.map((project) => (
-          <ProjectGroup
-            key={project.id}
-            project={project}
-            isExpanded={expandedProjects.has(project.id)}
-            selectedSessions={selectedSessions}
-            activeTabSessionIds={activeTabSessionIds}
-            hasActiveTab={hasActiveTab}
-            onToggleExpand={() => onToggleProject(project.id)}
-            onToggleSession={onToggleSession}
-            onSelectAll={onSelectAllInProject}
-            onAddToTab={onAddToTab}
-          />
-        ))}
+        {displayProjects.map((project) => {
+          const isExpanded = searchQuery.trim()
+            ? true
+            : expandedProjects.has(project.id);
+          return (
+            <ProjectGroup
+              key={project.id}
+              project={project}
+              isExpanded={isExpanded}
+              selectedSessions={selectedSessions}
+              activeTabSessionIds={activeTabSessionIds}
+              hasActiveTab={hasActiveTab}
+              onToggleExpand={() => onToggleProject(project.id)}
+              onToggleSession={onToggleSession}
+              onSelectAll={onSelectAllInProject}
+              onAddToTab={onAddToTab}
+            />
+          );
+        })}
       </div>
 
       <div className="p-2 border-t border-sidebar-border flex gap-2">

@@ -35,7 +35,11 @@ interface FilterableProject {
   id: string;
   name: string;
   path: string;
-  sessions: Array<{ id: string; title: string }>;
+  sessions: Array<{
+    id: string;
+    title: string;
+    firstUserMessage?: string | null;
+  }>;
 }
 
 export function filterProjects<T extends FilterableProject>(
@@ -53,8 +57,10 @@ export function filterProjects<T extends FilterableProject>(
 
       if (projectMatches) return project;
 
-      const filteredSessions = project.sessions.filter((s) =>
-        s.title.toLowerCase().includes(lowerQuery),
+      const filteredSessions = project.sessions.filter(
+        (s) =>
+          s.title.toLowerCase().includes(lowerQuery) ||
+          (s.firstUserMessage?.toLowerCase().includes(lowerQuery) ?? false),
       );
 
       if (filteredSessions.length === 0) return null;

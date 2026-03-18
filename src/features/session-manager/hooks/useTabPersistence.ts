@@ -1,19 +1,74 @@
 import { useCallback, useState } from "react";
-import type { PermissionMode, SessionManagerTab } from "../types";
+import type {
+  GridLayoutItem,
+  PermissionMode,
+  SessionManagerTab,
+  TabGridLayouts,
+} from "../types";
 
 const TABS_KEY = "ccv-session-manager-tabs";
 const ACTIVE_TAB_KEY = "ccv-session-manager-active-tab";
 const EXPANDED_KEY = "ccv-session-manager-expanded";
 const PERMISSION_KEY = "ccv-session-manager-permissions";
+const GRID_LAYOUTS_KEY = "ccv-session-manager-grid-layouts";
+const EXPANDED_CARDS_KEY = "ccv-session-manager-expanded-cards";
 
-function loadFromStorage<T>(key: string, fallback: T): T {
+function loadFromStorage<T>(
+  key: string,
+  fallback: T,
+  validate: (value: unknown) => value is T,
+): T {
   try {
     const stored = localStorage.getItem(key);
     if (stored === null) return fallback;
-    return JSON.parse(stored) as T;
+    const parsed: unknown = JSON.parse(stored);
+    return validate(parsed) ? parsed : fallback;
   } catch {
     return fallback;
   }
+}
+
+function isSessionManagerTabArray(
+  value: unknown,
+): value is SessionManagerTab[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) =>
+        typeof item === "object" &&
+        item !== null &&
+        "id" in item &&
+        "name" in item &&
+        "sessionIds" in item,
+    )
+  );
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) && value.every((item) => typeof item === "string")
+  );
+}
+
+function isStringOrNull(value: unknown): value is string | null {
+  return value === null || typeof value === "string";
+}
+
+function isPermissionOverrides(
+  value: unknown,
+): value is Record<string, PermissionMode> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isTabGridLayouts(value: unknown): value is TabGridLayouts {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isTabExpandedCards(value: unknown): value is Record<string, string[]> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  return Object.values(value).every((v) => isStringArray(v));
 }
 
 function saveToStorage(key: string, value: unknown): void {
@@ -26,13 +81,13 @@ function saveToStorage(key: string, value: unknown): void {
 
 export function useTabPersistence() {
   const [tabs, setTabsState] = useState<SessionManagerTab[]>(() =>
-    loadFromStorage<SessionManagerTab[]>(TABS_KEY, []),
+    loadFromStorage(TABS_KEY, [], isSessionManagerTabArray),
   );
   const [activeTabId, setActiveTabIdState] = useState<string | null>(() =>
-    loadFromStorage<string | null>(ACTIVE_TAB_KEY, null),
+    loadFromStorage(ACTIVE_TAB_KEY, null, isStringOrNull),
   );
   const [expandedProjects, setExpandedProjectsState] = useState<string[]>(() =>
-    loadFromStorage<string[]>(EXPANDED_KEY, []),
+    loadFromStorage(EXPANDED_KEY, [], isStringArray),
   );
 
   const setTabs = useCallback((newTabs: SessionManagerTab[]) => {
@@ -52,7 +107,7 @@ export function useTabPersistence() {
 
   const [permissionOverrides, setPermissionOverridesState] = useState<
     Record<string, PermissionMode>
-  >(() => loadFromStorage<Record<string, PermissionMode>>(PERMISSION_KEY, {}));
+  >(() => loadFromStorage(PERMISSION_KEY, {}, isPermissionOverrides));
 
   const setPermissionOverrides = useCallback(
     (overrides: Record<string, PermissionMode>) => {
@@ -60,6 +115,43 @@ export function useTabPersistence() {
       saveToStorage(PERMISSION_KEY, overrides);
     },
     [],
+  );
+
+  const [gridLayouts, setGridLayoutsState] = useState<TabGridLayouts>(() =>
+    loadFromStorage(GRID_LAYOUTS_KEY, {}, isTabGridLayouts),
+  );
+
+  const setGridLayout = useCallback(
+    (tabId: string, layout: GridLayoutItem[]) => {
+      setGridLayoutsState((prev) => {
+        const next = { ...prev, [tabId]: layout };
+        saveToStorage(GRID_LAYOUTS_KEY, next);
+        return next;
+      });
+    },
+    [],
+  );
+
+  const getGridLayout = useCallback(
+    (tabId: string): GridLayoutItem[] | undefined => gridLayouts[tabId],
+    [gridLayouts],
+  );
+
+  const [tabExpandedCards, setTabExpandedCardsState] = useState<
+    Record<string, string[]>
+  >(() => loadFromStorage(EXPANDED_CARDS_KEY, {}, isTabExpandedCards));
+
+  const _setExpandedCards = useCallback((tabId: string, cards: string[]) => {
+    setTabExpandedCardsState((prev) => {
+      const next = { ...prev, [tabId]: cards };
+      saveToStorage(EXPANDED_CARDS_KEY, next);
+      return next;
+    });
+  }, []);
+
+  const _getExpandedCards = useCallback(
+    (tabId: string): string[] => tabExpandedCards[tabId] ?? [],
+    [tabExpandedCards],
   );
 
   return {
@@ -71,5 +163,9 @@ export function useTabPersistence() {
     setExpandedProjects,
     permissionOverrides,
     setPermissionOverrides,
+    getGridLayout,
+    setGridLayout,
+    getExpandedCards: _getExpandedCards,
+    setExpandedCards: _setExpandedCards,
   };
 }

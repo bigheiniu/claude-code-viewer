@@ -12,10 +12,21 @@ export const TabBar: FC<{
   onTabClick: (tabId: string) => void;
   onTabClose: (tabId: string) => void;
   onTabCreate: (name: string) => void;
-}> = ({ tabs, activeTabId, onTabClick, onTabClose, onTabCreate }) => {
+  onTabRename?: (tabId: string, newName: string) => void;
+}> = ({
+  tabs,
+  activeTabId,
+  onTabClick,
+  onTabClose,
+  onTabCreate,
+  onTabRename,
+}) => {
   const [isCreating, setIsCreating] = useState(false);
   const [newTabName, setNewTabName] = useState("");
+  const [renamingTabId, setRenamingTabId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const renameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isCreating && inputRef.current) {
@@ -23,22 +34,54 @@ export const TabBar: FC<{
     }
   }, [isCreating]);
 
+  useEffect(() => {
+    if (renamingTabId && renameInputRef.current) {
+      renameInputRef.current.focus();
+      renameInputRef.current.select();
+    }
+  }, [renamingTabId]);
+
   const handleCreate = () => {
-    if (!newTabName.trim()) return;
-    onTabCreate(newTabName.trim());
+    const trimmedName = newTabName.trim();
+    const finalName = trimmedName || `Tab ${tabs.length + 1}`;
+    onTabCreate(finalName);
     setNewTabName("");
     setIsCreating(false);
   };
 
+  const handleRename = (tabId: string) => {
+    const trimmedName = renameValue.trim();
+    if (trimmedName && onTabRename) {
+      onTabRename(tabId, trimmedName);
+    }
+    setRenamingTabId(null);
+    setRenameValue("");
+  };
+
+  const startRenaming = (tabId: string, currentName: string) => {
+    setRenamingTabId(tabId);
+    setRenameValue(currentName);
+  };
+
+  const handleTabClose = (tabId: string, tabName: string) => {
+    const confirmed = window.confirm(
+      `Close tab '${tabName}'? Sessions will be removed from this tab.`,
+    );
+    if (confirmed) {
+      onTabClose(tabId);
+    }
+  };
+
   return (
-    <div className="flex items-end border-b border-border bg-muted/30 h-10 px-4 gap-0.5">
+    <div className="flex flex-nowrap items-end border-b border-border bg-muted/30 h-10 px-4 gap-0.5 overflow-x-auto scrollbar-hide">
       {tabs.map((tab) => {
         const isActive = tab.id === activeTabId;
+        const isRenaming = renamingTabId === tab.id;
         return (
           <div
             key={tab.id}
             className={cn(
-              "flex items-center gap-1 rounded-t-md transition-colors text-xs",
+              "flex shrink-0 items-center gap-1 rounded-t-md transition-colors text-xs",
               isActive
                 ? "bg-background border-b-2 border-primary font-semibold"
                 : "text-muted-foreground hover:bg-background/50",
@@ -48,8 +91,31 @@ export const TabBar: FC<{
               type="button"
               className="flex items-center gap-2 px-3 py-1.5 cursor-pointer"
               onClick={() => onTabClick(tab.id)}
+              onDoubleClick={() => startRenaming(tab.id, tab.name)}
             >
-              <span>{tab.name}</span>
+              {isRenaming ? (
+                <Input
+                  ref={renameInputRef}
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.stopPropagation();
+                      handleRename(tab.id);
+                    }
+                    if (e.key === "Escape") {
+                      e.stopPropagation();
+                      setRenamingTabId(null);
+                      setRenameValue("");
+                    }
+                  }}
+                  onBlur={() => handleRename(tab.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="h-5 w-20 text-xs px-1"
+                />
+              ) : (
+                <span>{tab.name}</span>
+              )}
               <Badge
                 variant="secondary"
                 className="h-4 px-1 text-[9px] font-mono"
@@ -60,12 +126,12 @@ export const TabBar: FC<{
             <button
               type="button"
               className={cn(
-                "h-4 w-4 rounded-sm flex items-center justify-center transition-opacity mr-1",
+                "h-5 w-5 rounded-sm flex items-center justify-center transition-opacity mr-1.5",
                 isActive
                   ? "opacity-70 hover:opacity-100"
-                  : "opacity-30 hover:opacity-70",
+                  : "opacity-50 hover:opacity-70",
               )}
-              onClick={() => onTabClose(tab.id)}
+              onClick={() => handleTabClose(tab.id, tab.name)}
             >
               <XIcon className="h-3 w-3" />
             </button>

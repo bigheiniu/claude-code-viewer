@@ -1,12 +1,13 @@
+import { MenuIcon, PanelLeftIcon } from "lucide-react";
 import { type FC, Suspense, useCallback, useState } from "react";
 import { Loading } from "@/components/Loading";
+import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useAllProjectSessions } from "../hooks/useAllProjectSessions";
 import { useSessionManager } from "../hooks/useSessionManager";
-import { makeCompositeId } from "../utils";
+import { filterProjects } from "../utils";
 import { CanvasHeader } from "./CanvasHeader";
 import { ProjectSidebar } from "./ProjectSidebar";
-import { SessionDetailPanel } from "./SessionDetailPanel";
 import { SessionGrid } from "./SessionGrid";
 import { TabBar } from "./TabBar";
 
@@ -15,106 +16,139 @@ const SessionManagerContent: FC = () => {
   const manager = useSessionManager();
   const isMobile = useIsMobile();
 
-  const [activeSession, setActiveSession] = useState<{
-    projectId: string;
-    sessionId: string;
-  } | null>(null);
-
   const activeTabSessionIds = manager.currentTab?.sessionIds ?? [];
   const displaySessionIds = manager.currentTab
     ? activeTabSessionIds
     : [...manager.selectedSessions];
 
-  const allCompositeIds = projects.flatMap((p) =>
-    p.sessions.map((s) => s.compositeId),
+  // Bug #2 fix: Compute allCompositeIds from filtered projects
+  const filteredProjects = filterProjects(
+    projects.map((p) => ({
+      ...p,
+      sessions: p.sessions.map((s) => ({
+        ...s,
+        id: s.compositeId,
+        title: s.title,
+      })),
+    })),
+    manager.searchQuery,
+  );
+  const allCompositeIds = filteredProjects.flatMap((p) =>
+    p.sessions.map((s) => s.id),
   );
 
-  const handleCardClick = useCallback(
-    (projectId: string, sessionId: string) => {
-      setActiveSession({ projectId, sessionId });
+  // Bug #3 fix: When a tab is active, toggle should add/remove from tab
+  const handleToggleSession = useCallback(
+    (compositeId: string) => {
+      if (manager.activeTabId) {
+        // If session is in active tab, remove it; otherwise add it
+        if (activeTabSessionIds.includes(compositeId)) {
+          manager.removeFromTab(compositeId);
+        } else {
+          manager.addToTab(compositeId);
+        }
+      } else {
+        // No active tab, use regular toggle
+        manager.toggleSession(compositeId);
+      }
     },
-    [],
+    [manager, activeTabSessionIds],
   );
 
-  const handleBack = useCallback(() => {
-    setActiveSession(null);
-  }, []);
+  const handleRemoveSession = useCallback(
+    (compositeId: string) => {
+      if (manager.currentTab) {
+        manager.removeFromTab(compositeId);
+      } else {
+        // When no active tab, deselect the session instead
+        manager.toggleSession(compositeId);
+      }
+    },
+    [manager],
+  );
 
-  const activeCompositeId = activeSession
-    ? makeCompositeId(activeSession.projectId, activeSession.sessionId)
-    : null;
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  if (activeSession) {
-    return (
-      <div className="flex h-screen">
-        {!isMobile && (
-          <div className="w-[290px] min-w-[290px]">
-            <ProjectSidebar
-              projects={projects}
-              expandedProjects={manager.expandedProjects}
-              selectedSessions={manager.selectedSessions}
-              searchQuery={manager.searchQuery}
-              activeTabSessionIds={activeTabSessionIds}
-              hasActiveTab={manager.activeTabId !== null}
-              onSearchChange={manager.setSearchQuery}
-              onToggleProject={manager.toggleProject}
-              onToggleSession={manager.toggleSession}
-              onSelectAllInProject={manager.selectAllInProject}
-              onSelectAll={() => manager.selectAll(allCompositeIds)}
-              onClearSelection={manager.clearSelection}
-              onAddToTab={manager.addToTab}
-            />
-          </div>
-        )}
-        <div className="flex-1 flex flex-col min-w-0">
-          <SessionDetailPanel
-            projectId={activeSession.projectId}
-            sessionId={activeSession.sessionId}
-            permissionMode={
-              activeCompositeId
-                ? manager.getPermissionMode(activeCompositeId)
-                : "default"
-            }
-            onBack={handleBack}
-            onTogglePermission={() => {
-              if (activeCompositeId) {
-                manager.togglePermissionMode(activeCompositeId);
-              }
-            }}
-          />
-        </div>
-      </div>
-    );
-  }
+  const sidebarContent = (
+    <ProjectSidebar
+      projects={projects}
+      expandedProjects={manager.expandedProjects}
+      selectedSessions={manager.selectedSessions}
+      searchQuery={manager.searchQuery}
+      activeTabSessionIds={activeTabSessionIds}
+      hasActiveTab={manager.activeTabId !== null}
+      onSearchChange={manager.setSearchQuery}
+      onToggleProject={manager.toggleProject}
+      onToggleSession={handleToggleSession}
+      onSelectAllInProject={manager.selectAllInProject}
+      onSelectAll={() => manager.selectAll(allCompositeIds)}
+      onClearSelection={manager.clearSelection}
+      onAddToTab={manager.addToTab}
+    />
+  );
 
   return (
     <div className="flex h-screen">
-      <div className={isMobile ? "hidden" : "w-[290px] min-w-[290px]"}>
-        <ProjectSidebar
-          projects={projects}
-          expandedProjects={manager.expandedProjects}
-          selectedSessions={manager.selectedSessions}
-          searchQuery={manager.searchQuery}
-          activeTabSessionIds={activeTabSessionIds}
-          hasActiveTab={manager.activeTabId !== null}
-          onSearchChange={manager.setSearchQuery}
-          onToggleProject={manager.toggleProject}
-          onToggleSession={manager.toggleSession}
-          onSelectAllInProject={manager.selectAllInProject}
-          onSelectAll={() => manager.selectAll(allCompositeIds)}
-          onClearSelection={manager.clearSelection}
-          onAddToTab={manager.addToTab}
-        />
-      </div>
+      {/* Desktop sidebar */}
+      {!isMobile && (
+        <div
+          className={
+            sidebarCollapsed
+              ? "w-0 min-w-0 overflow-hidden"
+              : "w-[290px] min-w-[290px]"
+          }
+        >
+          {sidebarContent}
+        </div>
+      )}
+
+      {/* Mobile sidebar overlay */}
+      {isMobile && mobileSidebarOpen && (
+        <div className="fixed inset-0 z-40 flex">
+          <div className="w-[290px] bg-background shadow-xl z-50">
+            {sidebarContent}
+          </div>
+          <div
+            className="flex-1 bg-black/30"
+            onClick={() => setMobileSidebarOpen(false)}
+            onKeyDown={() => {}}
+          />
+        </div>
+      )}
 
       <div className="flex-1 flex flex-col min-w-0">
-        <TabBar
-          tabs={manager.tabs}
-          activeTabId={manager.activeTabId}
-          onTabClick={manager.setActiveTabId}
-          onTabClose={manager.closeTab}
-          onTabCreate={manager.createTab}
-        />
+        <div className="flex items-center">
+          {isMobile ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-1 mr-1"
+              onClick={() => setMobileSidebarOpen((prev) => !prev)}
+            >
+              <MenuIcon className="h-5 w-5" />
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-1 mr-1"
+              onClick={() => setSidebarCollapsed((prev) => !prev)}
+            >
+              <PanelLeftIcon className="h-5 w-5" />
+            </Button>
+          )}
+          <div className="flex-1 min-w-0">
+            <TabBar
+              tabs={manager.tabs}
+              activeTabId={manager.activeTabId}
+              onTabClick={manager.setActiveTabId}
+              onTabClose={manager.closeTab}
+              onTabCreate={manager.createTab}
+              onTabRename={manager.renameTab}
+            />
+          </div>
+        </div>
         <CanvasHeader
           tabName={manager.currentTab?.name ?? null}
           sessionCount={displaySessionIds.length}
@@ -123,8 +157,11 @@ const SessionManagerContent: FC = () => {
           <SessionGrid
             sessionIds={displaySessionIds}
             projects={projects}
-            onRemove={manager.removeFromTab}
-            onCardClick={handleCardClick}
+            expandedCards={manager.expandedCards}
+            savedLayout={manager.currentGridLayout}
+            onRemove={handleRemoveSession}
+            onToggleExpand={manager.toggleCardExpanded}
+            onLayoutChange={manager.updateGridLayout}
             getPermissionMode={manager.getPermissionMode}
             onTogglePermission={manager.togglePermissionMode}
           />
