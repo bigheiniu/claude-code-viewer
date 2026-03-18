@@ -22,6 +22,7 @@ export const ProjectSidebar: FC<{
   onSelectAll: () => void;
   onClearSelection: () => void;
   onAddToTab: (compositeId: string) => void;
+  onAddSelectedToTab?: () => void;
 }> = ({
   projects,
   expandedProjects,
@@ -36,6 +37,7 @@ export const ProjectSidebar: FC<{
   onSelectAll,
   onClearSelection,
   onAddToTab,
+  onAddSelectedToTab,
 }) => {
   const filteredProjects = filterProjects(
     projects.map((p) => ({
@@ -63,6 +65,10 @@ export const ProjectSidebar: FC<{
       };
     })
     .filter((p): p is NonNullable<typeof p> => p !== null);
+
+  const selectedNotInTab = hasActiveTab
+    ? [...selectedSessions].filter((id) => !activeTabSessionIds.includes(id))
+    : [];
 
   return (
     <div className="flex flex-col h-full border-r border-border bg-sidebar">
@@ -126,23 +132,35 @@ export const ProjectSidebar: FC<{
         })}
       </div>
 
-      <div className="p-2 border-t border-sidebar-border flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1 text-xs h-7"
-          onClick={onSelectAll}
-        >
-          <Trans id="session-manager.select-all" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1 text-xs h-7"
-          onClick={onClearSelection}
-        >
-          <Trans id="session-manager.clear" />
-        </Button>
+      <div className="p-2 border-t border-sidebar-border space-y-2">
+        {hasActiveTab && selectedNotInTab.length > 0 && onAddSelectedToTab && (
+          <Button
+            variant="default"
+            size="sm"
+            className="w-full text-xs h-7"
+            onClick={onAddSelectedToTab}
+          >
+            Add {selectedNotInTab.length} to Tab
+          </Button>
+        )}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 text-xs h-7"
+            onClick={onSelectAll}
+          >
+            <Trans id="session-manager.select-all" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 text-xs h-7"
+            onClick={onClearSelection}
+          >
+            <Trans id="session-manager.clear" />
+          </Button>
+        </div>
       </div>
     </div>
   );

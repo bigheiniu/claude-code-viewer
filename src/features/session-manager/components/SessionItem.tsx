@@ -1,4 +1,4 @@
-import { PlusIcon } from "lucide-react";
+import { CheckIcon, PlusIcon } from "lucide-react";
 import type { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,7 +27,11 @@ export const SessionItem: FC<{
       type="button"
       className={cn(
         "group relative flex items-center gap-2 rounded-md px-2 py-2 cursor-pointer transition-colors w-full text-left",
-        isSelected ? "bg-accent/50" : "hover:bg-accent/30",
+        isSelected
+          ? "bg-accent/50"
+          : isInActiveTab
+            ? "bg-accent/20"
+            : "hover:bg-accent/30",
       )}
       style={
         isSelected
@@ -89,9 +93,12 @@ export const SessionItem: FC<{
       )}
       {isInActiveTab && (
         <span
-          className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full"
-          style={{ backgroundColor: projectColor }}
-        />
+          className="flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
+          style={{ backgroundColor: `${projectColor}20`, color: projectColor }}
+        >
+          <CheckIcon className="h-2.5 w-2.5" />
+          Tab
+        </span>
       )}
     </button>
   );

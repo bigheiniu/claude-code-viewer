@@ -1,5 +1,5 @@
 import { MenuIcon, PanelLeftIcon } from "lucide-react";
-import { type FC, Suspense, useCallback, useState } from "react";
+import { type FC, Suspense, useCallback, useEffect, useState } from "react";
 import { Loading } from "@/components/Loading";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -67,6 +67,55 @@ const SessionManagerContent: FC = () => {
     [manager],
   );
 
+  const handleAddSelectedToTab = useCallback(() => {
+    if (!manager.activeTabId) return;
+    for (const id of manager.selectedSessions) {
+      if (!activeTabSessionIds.includes(id)) {
+        manager.addToTab(id);
+      }
+    }
+  }, [manager, activeTabSessionIds]);
+
+  const handleExpandAll = useCallback(() => {
+    for (const id of displaySessionIds) {
+      if (!manager.expandedCards.has(id)) {
+        manager.toggleCardExpanded(id);
+      }
+    }
+  }, [displaySessionIds, manager]);
+
+  const handleCollapseAll = useCallback(() => {
+    for (const id of displaySessionIds) {
+      if (manager.expandedCards.has(id)) {
+        manager.toggleCardExpanded(id);
+      }
+    }
+  }, [displaySessionIds, manager]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod) return;
+
+      if (e.key === "t") {
+        e.preventDefault();
+        manager.createTab(`Tab ${manager.tabs.length + 1}`);
+      } else if (e.key === "w" && manager.activeTabId) {
+        e.preventDefault();
+        manager.closeTab(manager.activeTabId);
+      } else if (e.key >= "1" && e.key <= "9") {
+        const index = Number.parseInt(e.key, 10) - 1;
+        const tab = manager.tabs[index];
+        if (tab) {
+          e.preventDefault();
+          manager.setActiveTabId(tab.id);
+        }
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [manager]);
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -85,6 +134,7 @@ const SessionManagerContent: FC = () => {
       onSelectAll={() => manager.selectAll(allCompositeIds)}
       onClearSelection={manager.clearSelection}
       onAddToTab={manager.addToTab}
+      onAddSelectedToTab={handleAddSelectedToTab}
     />
   );
 
@@ -152,6 +202,9 @@ const SessionManagerContent: FC = () => {
         <CanvasHeader
           tabName={manager.currentTab?.name ?? null}
           sessionCount={displaySessionIds.length}
+          onExpandAll={handleExpandAll}
+          onCollapseAll={handleCollapseAll}
+          hasExpandedCards={manager.expandedCards.size > 0}
         />
         <div className="flex-1 overflow-auto">
           <SessionGrid
