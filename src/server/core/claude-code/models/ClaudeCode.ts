@@ -192,7 +192,7 @@ export const query = (
     const options: AgentSdkQueryOptions = {
       ...baseOptions,
       systemPrompt,
-      settingSources,
+      ...(settingSources !== undefined ? { settingSources } : {}),
       pathToClaudeCodeExecutable: claudeCodeExecutablePath,
       disallowedTools: [
         "AskUserQuestion",

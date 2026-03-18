@@ -19,6 +19,7 @@ import { FeatureFlagController } from "./core/feature-flag/presentation/FeatureF
 import { FileSystemController } from "./core/file-system/presentation/FileSystemController";
 import { GitController } from "./core/git/presentation/GitController";
 import { GitService } from "./core/git/services/GitService";
+import { MemoryController } from "./core/memory/presentation/MemoryController";
 import { isDevelopmentEnv } from "./core/platform/ccvEnv";
 import type { CliOptions } from "./core/platform/services/CcvOptionsService";
 import { ProjectRepository } from "./core/project/infrastructure/ProjectRepository";
@@ -164,6 +165,7 @@ const PresentationLayer = Layer.mergeAll(
   SSEController.Live,
   SchedulerController.Live,
   FeatureFlagController.Live,
+  MemoryController.Live,
   SearchController.Live,
   TasksController.Live,
   WorkerController.Live,

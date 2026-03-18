@@ -1,5 +1,8 @@
 import { Trans } from "@lingui/react";
+import { Link } from "@tanstack/react-router";
+import { LayoutGridIcon } from "lucide-react";
 import { type FC, Suspense } from "react";
+import { Button } from "@/components/ui/button";
 import { TopNav } from "../workers/components/TopNav";
 import { ProjectList } from "./components/ProjectList";
 import { SetupProjectDialog } from "./components/SetupProjectDialog";
@@ -22,7 +25,15 @@ export const ProjectsPage: FC = () => {
                 <h2 className="text-xl font-semibold">
                   <Trans id="projects.page.title" />
                 </h2>
-                <SetupProjectDialog />
+                <div className="flex items-center gap-2">
+                  <Link to="/session-manager">
+                    <Button variant="outline" size="sm">
+                      <LayoutGridIcon className="w-4 h-4 mr-2" />
+                      <Trans id="session-manager.title" />
+                    </Button>
+                  </Link>
+                  <SetupProjectDialog />
+                </div>
               </div>
               <Suspense
                 fallback={

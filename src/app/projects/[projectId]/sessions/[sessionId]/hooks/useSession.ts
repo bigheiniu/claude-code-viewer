@@ -1,8 +1,12 @@
 import { useCallback, useMemo } from "react";
 import { useSessionQuery } from "./useSessionQuery";
 
-export const useSession = (projectId: string, sessionId: string) => {
-  const query = useSessionQuery(projectId, sessionId);
+export const useSession = (
+  projectId: string,
+  sessionId: string,
+  options?: { isRunning?: boolean },
+) => {
+  const query = useSessionQuery(projectId, sessionId, options);
   const session = query.data?.session;
   if (session === undefined || session === null) {
     throw new Error("Session not found");

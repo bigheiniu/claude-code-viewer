@@ -1,0 +1,30 @@
+.session-grid-layout {
+  min-height: 100%;
+}
+
+.session-grid-item {
+  position: relative;
+  height: 100%;
+}
+
+.session-grid-item > div:not(.drag-handle) {
+  height: 100%;
+}
+
+/* Ensure interactive buttons are above drag handle */
+.session-grid-item button {
+  position: relative;
+  z-index: 20;
+}
+
+/* Style the resize handle */
+.session-grid-item .react-resizable-handle {
+  z-index: 20;
+}
+
+/* Prevent text selection during drag */
+.react-grid-item.react-draggable-dragging {
+  z-index: 100;
+  opacity: 0.9;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}

@@ -2578,6 +2578,42 @@
     ],
     "translation": "Scheduler"
   },
+  "session-manager.all-sessions": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [],
+    "translation": "All Sessions"
+  },
+  "session-manager.clear": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [],
+    "translation": "Clear"
+  },
+  "session-manager.empty-tab": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [],
+    "translation": "No sessions in this tab"
+  },
+  "session-manager.empty-tab-hint": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [],
+    "translation": "Select sessions from the sidebar and click '+ Tab' to add them"
+  },
+  "session-manager.select-all": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [],
+    "translation": "Select All"
+  },
+  "session-manager.title": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [],
+    "translation": "Session Manager"
+  },
   "session.conversation.abort": {
     "placeholders": {},
     "comments": [],
