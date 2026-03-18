@@ -20,6 +20,7 @@ import { authRoutes } from "./authRoutes";
 import { claudeCodeRoutes } from "./claudeCodeRoutes";
 import { featureFlagRoutes } from "./featureFlagRoutes";
 import { fileSystemRoutes } from "./fileSystemRoutes";
+import { memoryRoutes } from "./memoryRoutes";
 import { projectRoutes } from "./projectRoutes";
 import { schedulerRoutes } from "./schedulerRoutes";
 import { searchRoutes } from "./searchRoutes";
@@ -129,6 +130,7 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
         .route("/api/feature-flags", yield* featureFlagRoutes)
         .route("/api/tasks", yield* tasksRoutes)
         .route("/api/sse", yield* sseRoutes)
+        .route("/api/memory", yield* memoryRoutes)
     );
   });
 

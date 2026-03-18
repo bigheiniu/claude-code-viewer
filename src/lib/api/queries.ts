@@ -369,6 +369,19 @@ export const agentSessionQuery = (
     },
   }) as const;
 
+export const memoryTitlesQuery = {
+  queryKey: ["memory", "titles"],
+  queryFn: async () => {
+    const response = await honoClient.api.memory.titles.$get();
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch memory titles: ${response.statusText}`);
+    }
+
+    return await response.json();
+  },
+} as const;
+
 export const searchQuery = (
   query: string,
   options?: { limit?: number; projectId?: string },

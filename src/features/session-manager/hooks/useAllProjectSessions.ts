@@ -1,8 +1,12 @@
-import { useQueries, useSuspenseQuery } from "@tanstack/react-query";
+import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { firstUserMessageToTitle } from "@/app/projects/[projectId]/services/firstCommandToTitle";
 import { sessionProcessesAtom } from "@/app/projects/[projectId]/sessions/[sessionId]/store/sessionProcessesAtom";
-import { projectDetailQuery, projectListQuery } from "@/lib/api/queries";
+import {
+  memoryTitlesQuery,
+  projectDetailQuery,
+  projectListQuery,
+} from "@/lib/api/queries";
 import type { ProjectSession, ProjectWithSessions } from "../types";
 import { getProjectColor, makeCompositeId } from "../utils";
 
@@ -16,6 +20,15 @@ export function useAllProjectSessions(): {
   });
 
   const sessionProcesses = useAtomValue(sessionProcessesAtom);
+
+  // Fetch memory-based session titles for enhanced display
+  const memoryTitlesResult = useQuery({
+    queryKey: memoryTitlesQuery.queryKey,
+    queryFn: memoryTitlesQuery.queryFn,
+    staleTime: 5 * 60 * 1000,
+  });
+  const memoryTitles: Record<string, string> =
+    memoryTitlesResult.data?.titles ?? {};
 
   // Fetch first page of sessions for each project
   const sessionQueries = useQueries({
@@ -69,6 +82,7 @@ export function useAllProjectSessions(): {
             title: firstUserMessage
               ? firstUserMessageToTitle(firstUserMessage)
               : session.id,
+            memoryTitle: memoryTitles[session.id] ?? null,
             messageCount: session.meta.messageCount,
             lastModifiedAt: session.lastModifiedAt
               ? new Date(session.lastModifiedAt).toISOString()

@@ -34,6 +34,7 @@ export interface ProjectSession {
   compositeId: string;
   projectId: string;
   title: string;
+  memoryTitle: string | null;
   messageCount: number;
   lastModifiedAt: string | null;
   firstUserMessage: string | null;

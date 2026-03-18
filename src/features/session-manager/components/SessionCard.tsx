@@ -84,7 +84,7 @@ const CollapsedCard: FC<{
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="text-xs font-semibold font-mono break-words whitespace-normal">
-                    {generateShortTitle(session.title)}
+                    {session.memoryTitle ?? generateShortTitle(session.title)}
                   </span>
                 </TooltipTrigger>
                 <TooltipContent
@@ -642,7 +642,7 @@ export const SessionCard: FC<{
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="text-[10px] font-semibold truncate flex-1">
-                {generateShortTitle(session.title)}
+                {session.memoryTitle ?? generateShortTitle(session.title)}
               </span>
             </TooltipTrigger>
             <TooltipContent
