@@ -12,15 +12,17 @@ type ServerMessage =
 
 const buildWsUrl = (options: {
   cwd: string;
-  claudeSessionId: string;
+  claudeSessionId?: string;
   terminalSessionId?: string;
 }) => {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const params = new URLSearchParams({
     cwd: options.cwd,
     command: "claude",
-    args: `--resume,${options.claudeSessionId}`,
   });
+  if (options.claudeSessionId) {
+    params.set("args", `--resume,${options.claudeSessionId}`);
+  }
   if (options.terminalSessionId) {
     params.set("sessionId", options.terminalSessionId);
   }
@@ -29,7 +31,7 @@ const buildWsUrl = (options: {
 
 export const TerminalEmbed: FC<{
   cwd: string;
-  claudeSessionId: string;
+  claudeSessionId?: string;
   terminalSessionId?: string;
 }> = ({ cwd, claudeSessionId, terminalSessionId }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -70,7 +72,11 @@ export const TerminalEmbed: FC<{
     wsRef.current = ws;
 
     ws.onopen = () => {
-      terminal.writeln("\x1b[2m Connecting to claude session...\x1b[0m");
+      terminal.writeln(
+        claudeSessionId
+          ? "\x1b[2m Connecting to claude session...\x1b[0m"
+          : "\x1b[2m Starting new claude session...\x1b[0m",
+      );
     };
 
     ws.onmessage = (event) => {

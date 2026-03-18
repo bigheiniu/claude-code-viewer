@@ -7,6 +7,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { toast } from "sonner";
@@ -63,9 +64,20 @@ const SessionManagerContent: FC = () => {
     () => new Set(manager.currentTab?.sessionIds ?? []),
     [manager.currentTab?.sessionIds],
   );
-  const displaySessionIds = manager.currentTab
-    ? (manager.currentTab.sessionIds ?? [])
-    : [...manager.selectedSessions];
+  const newSessionIds = useMemo(
+    () => manager.newSessionCards.map((c) => c.compositeId),
+    [manager.newSessionCards],
+  );
+
+  const displaySessionIds = useMemo(() => {
+    const base = manager.currentTab
+      ? (manager.currentTab.sessionIds ?? [])
+      : [...manager.selectedSessions];
+    // Include new session cards that aren't already in the list
+    const baseSet = new Set(base);
+    const extras = newSessionIds.filter((id) => !baseSet.has(id));
+    return [...base, ...extras];
+  }, [manager.currentTab, manager.selectedSessions, newSessionIds]);
 
   // Bug #2 fix: Compute allCompositeIds from filtered projects
   const filteredProjects = useMemo(
@@ -98,6 +110,20 @@ const SessionManagerContent: FC = () => {
     }
     return map;
   }, [projects]);
+
+  const aggregateStats = useMemo(() => {
+    let totalCostUsd = 0;
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+    for (const id of displaySessionIds) {
+      const session = sessionLookup.get(id);
+      if (!session) continue;
+      totalCostUsd += session.costUsd ?? 0;
+      totalInputTokens += session.inputTokens ?? 0;
+      totalOutputTokens += session.outputTokens ?? 0;
+    }
+    return { totalCostUsd, totalInputTokens, totalOutputTokens };
+  }, [displaySessionIds, sessionLookup]);
 
   const sortedSessionIds = useMemo(() => {
     return [...displaySessionIds].sort((a, b) => {
@@ -213,6 +239,9 @@ const SessionManagerContent: FC = () => {
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(290);
+  const isResizing = useRef(false);
+  const [activeFilter, setActiveFilter] = useState("all");
 
   const sidebarContent = (
     <ProjectSidebar
@@ -230,6 +259,26 @@ const SessionManagerContent: FC = () => {
       onClearSelection={manager.clearSelection}
       onAddToTab={manager.addToTab}
       onAddSelectedToTab={handleAddSelectedToTab}
+      activeFilter={activeFilter}
+      onFilterChange={setActiveFilter}
+      hiddenCount={manager.hiddenSessions.size}
+      hiddenSessions={manager.hiddenSessions}
+      onToggleHide={(compositeId) => {
+        if (manager.hiddenSessions.has(compositeId)) {
+          manager.unhideSession(compositeId);
+        } else {
+          manager.hideSession(compositeId);
+        }
+      }}
+      onNewSession={(projectId, projectPath, projectColor, projectName) => {
+        manager.createNewSession({
+          projectId,
+          projectPath,
+          projectColor,
+          projectName,
+        });
+        toast.success(`New session created for ${projectName}`);
+      }}
     />
   );
 
@@ -239,13 +288,43 @@ const SessionManagerContent: FC = () => {
       {!isMobile && (
         <div
           className={cn(
-            "transition-all duration-200 ease-in-out",
-            sidebarCollapsed
-              ? "w-0 min-w-0 overflow-hidden"
-              : "w-[290px] min-w-[290px]",
+            "transition-all duration-200 ease-in-out relative",
+            sidebarCollapsed ? "w-0 min-w-0 overflow-hidden" : "",
           )}
+          style={
+            sidebarCollapsed
+              ? undefined
+              : { width: sidebarWidth, minWidth: 220, maxWidth: 500 }
+          }
         >
           {sidebarContent}
+          {/* Resize handle */}
+          {!sidebarCollapsed && (
+            <div
+              className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/20 active:bg-primary/40 transition-colors z-20"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                isResizing.current = true;
+                const startX = e.clientX;
+                const startWidth = sidebarWidth;
+                const onMouseMove = (ev: MouseEvent) => {
+                  if (!isResizing.current) return;
+                  const newWidth = Math.min(
+                    500,
+                    Math.max(220, startWidth + (ev.clientX - startX)),
+                  );
+                  setSidebarWidth(newWidth);
+                };
+                const onMouseUp = () => {
+                  isResizing.current = false;
+                  document.removeEventListener("mousemove", onMouseMove);
+                  document.removeEventListener("mouseup", onMouseUp);
+                };
+                document.addEventListener("mousemove", onMouseMove);
+                document.addEventListener("mouseup", onMouseUp);
+              }}
+            />
+          )}
         </div>
       )}
 
@@ -306,6 +385,9 @@ const SessionManagerContent: FC = () => {
           runningCount={runningProcesses.length}
           onStopAll={() => stopAllMutation.mutate()}
           isStoppingAll={stopAllMutation.isPending}
+          totalCostUsd={aggregateStats.totalCostUsd}
+          totalInputTokens={aggregateStats.totalInputTokens}
+          totalOutputTokens={aggregateStats.totalOutputTokens}
         />
         <div className="flex-1 overflow-auto">
           <SessionGrid
@@ -313,11 +395,13 @@ const SessionManagerContent: FC = () => {
             projects={projects}
             expandedCards={manager.expandedCards}
             savedLayout={manager.currentGridLayout}
+            newSessionCards={manager.newSessionCards}
             onRemove={handleRemoveSession}
             onToggleExpand={manager.toggleCardExpanded}
             onLayoutChange={manager.updateGridLayout}
             getPermissionMode={manager.getPermissionMode}
             onTogglePermission={manager.togglePermissionMode}
+            onRemoveNewSession={manager.removeNewSession}
           />
         </div>
       </div>

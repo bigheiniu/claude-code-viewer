@@ -12,6 +12,7 @@ const EXPANDED_KEY = "ccv-session-manager-expanded";
 const PERMISSION_KEY = "ccv-session-manager-permissions";
 const GRID_LAYOUTS_KEY = "ccv-session-manager-grid-layouts";
 const EXPANDED_CARDS_KEY = "ccv-session-manager-expanded-cards";
+const HIDDEN_SESSIONS_KEY = "ccv-session-manager-hidden";
 
 function loadFromStorage<T>(
   key: string,
@@ -145,6 +146,15 @@ export function useTabPersistence() {
     [gridLayouts],
   );
 
+  const [hiddenSessions, setHiddenSessionsState] = useState<string[]>(() =>
+    loadFromStorage(HIDDEN_SESSIONS_KEY, [], isStringArray),
+  );
+
+  const setHiddenSessions = useCallback((ids: string[]) => {
+    setHiddenSessionsState(ids);
+    saveToStorage(HIDDEN_SESSIONS_KEY, ids);
+  }, []);
+
   const [tabExpandedCards, setTabExpandedCardsState] = useState<
     Record<string, string[]>
   >(() => loadFromStorage(EXPANDED_CARDS_KEY, {}, isTabExpandedCards));
@@ -185,5 +195,7 @@ export function useTabPersistence() {
     setGridLayout,
     getExpandedCards: _getExpandedCards,
     setExpandedCards: _setExpandedCards,
+    hiddenSessions,
+    setHiddenSessions,
   };
 }

@@ -102,6 +102,8 @@ export function useAllProjectSessions(): {
               status: processStatusMap.get(session.id),
               modelName: session.meta.modelName,
               costUsd: session.meta.cost.totalUsd,
+              inputTokens: session.meta.cost.tokenUsage.inputTokens,
+              outputTokens: session.meta.cost.tokenUsage.outputTokens,
             };
           },
         );

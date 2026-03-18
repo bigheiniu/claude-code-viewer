@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import type {
   GridLayoutItem,
+  NewSessionCard,
   PermissionMode,
   SessionManagerTab,
 } from "../types";
@@ -20,12 +21,67 @@ export function useSessionManager() {
     setGridLayout,
     getExpandedCards,
     setExpandedCards,
+    hiddenSessions,
+    setHiddenSessions,
   } = useTabPersistence();
 
   const [selectedSessions, setSelectedSessions] = useState<Set<string>>(
     new Set(),
   );
   const [searchQuery, setSearchQuery] = useState("");
+  const [newSessionCards, setNewSessionCards] = useState<NewSessionCard[]>([]);
+
+  const createNewSession = useCallback(
+    (options: {
+      projectId: string;
+      projectPath: string;
+      projectColor: string;
+      projectName: string;
+    }) => {
+      const compositeId = `new-session-${Date.now()}`;
+      const card: NewSessionCard = {
+        compositeId,
+        projectId: options.projectId,
+        projectPath: options.projectPath,
+        projectColor: options.projectColor,
+        projectName: options.projectName,
+        createdAt: Date.now(),
+      };
+      setNewSessionCards((prev) => [...prev, card]);
+
+      // Auto-select and auto-expand the new card
+      setSelectedSessions((prev) => {
+        const next = new Set(prev);
+        next.add(compositeId);
+        return next;
+      });
+
+      // If there's an active tab, add to it
+      if (activeTabId) {
+        setTabs(
+          tabs.map((t) =>
+            t.id === activeTabId
+              ? { ...t, sessionIds: [...t.sessionIds, compositeId] }
+              : t,
+          ),
+        );
+      }
+
+      // Auto-expand
+      const tabKey = activeTabId ?? "__no_tab__";
+      const currentCards = getExpandedCards(tabKey);
+      setExpandedCards(tabKey, [...currentCards, compositeId]);
+
+      return compositeId;
+    },
+    [activeTabId, tabs, setTabs, getExpandedCards, setExpandedCards],
+  );
+
+  const removeNewSession = useCallback((compositeId: string) => {
+    setNewSessionCards((prev) =>
+      prev.filter((c) => c.compositeId !== compositeId),
+    );
+  }, []);
 
   const toggleSession = useCallback((compositeId: string) => {
     setSelectedSessions((prev) => {
@@ -153,6 +209,31 @@ export function useSessionManager() {
     [permissionOverrides, setPermissionOverrides],
   );
 
+  const hideSession = useCallback(
+    (compositeId: string) => {
+      if (!hiddenSessions.includes(compositeId)) {
+        setHiddenSessions([...hiddenSessions, compositeId]);
+      }
+    },
+    [hiddenSessions, setHiddenSessions],
+  );
+
+  const unhideSession = useCallback(
+    (compositeId: string) => {
+      setHiddenSessions(hiddenSessions.filter((id) => id !== compositeId));
+    },
+    [hiddenSessions, setHiddenSessions],
+  );
+
+  const unhideAll = useCallback(() => {
+    setHiddenSessions([]);
+  }, [setHiddenSessions]);
+
+  const hiddenSessionsSet = useMemo(
+    () => new Set(hiddenSessions),
+    [hiddenSessions],
+  );
+
   const toggleCardExpanded = useCallback(
     (compositeId: string) => {
       const tabKey = activeTabId ?? "__no_tab__";
@@ -217,5 +298,12 @@ export function useSessionManager() {
     toggleCardExpanded,
     currentGridLayout,
     updateGridLayout,
+    hiddenSessions: hiddenSessionsSet,
+    hideSession,
+    unhideSession,
+    unhideAll,
+    newSessionCards,
+    createNewSession,
+    removeNewSession,
   };
 }

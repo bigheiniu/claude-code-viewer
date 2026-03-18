@@ -1,5 +1,6 @@
-import { ChevronRightIcon } from "lucide-react";
+import { ChevronRightIcon, PlusCircleIcon } from "lucide-react";
 import { type FC, memo } from "react";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import type { ProjectWithSessions } from "../types";
@@ -11,10 +12,13 @@ export const ProjectGroup: FC<{
   selectedSessions: Set<string>;
   activeTabSessionIds: Set<string>;
   hasActiveTab: boolean;
+  hiddenSessions: Set<string>;
   onToggleExpand: () => void;
   onToggleSession: (compositeId: string) => void;
   onSelectAll: (compositeIds: string[]) => void;
   onAddToTab: (compositeId: string) => void;
+  onToggleHide: (compositeId: string) => void;
+  onNewSession: () => void;
 }> = memo(
   ({
     project,
@@ -22,10 +26,13 @@ export const ProjectGroup: FC<{
     selectedSessions,
     activeTabSessionIds,
     hasActiveTab,
+    hiddenSessions,
     onToggleExpand,
     onToggleSession,
     onSelectAll,
     onAddToTab,
+    onToggleHide,
+    onNewSession,
   }) => {
     const compositeIds = project.sessions.map((s) => s.compositeId);
     const selectedCount = compositeIds.filter((id) =>
@@ -40,7 +47,7 @@ export const ProjectGroup: FC<{
         <button
           type="button"
           className={cn(
-            "flex items-center gap-2 rounded-lg px-2 py-2 cursor-pointer transition-colors w-full text-left",
+            "group flex items-center gap-2 rounded-lg px-2 py-2 cursor-pointer transition-colors w-full text-left",
             isExpanded ? "bg-muted/50" : "hover:bg-muted/30",
           )}
           onClick={onToggleExpand}
@@ -67,6 +74,17 @@ export const ProjectGroup: FC<{
                 ? `${selectedCount}/${project.sessions.length}`
                 : `${project.sessions.length}`}
             </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 w-5 p-0 opacity-0 group-hover:opacity-70 hover:!opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNewSession();
+              }}
+            >
+              <PlusCircleIcon className="h-3.5 w-3.5" />
+            </Button>
             <Checkbox
               checked={
                 allSelected ? true : someSelected ? "indeterminate" : false
@@ -90,9 +108,11 @@ export const ProjectGroup: FC<{
                 projectColor={project.color}
                 isSelected={selectedSessions.has(session.compositeId)}
                 isInActiveTab={activeTabSessionIds.has(session.compositeId)}
+                isHidden={hiddenSessions.has(session.compositeId)}
                 hasActiveTab={hasActiveTab}
                 onToggle={() => onToggleSession(session.compositeId)}
                 onAddToTab={() => onAddToTab(session.compositeId)}
+                onToggleHide={() => onToggleHide(session.compositeId)}
               />
             ))}
           </div>

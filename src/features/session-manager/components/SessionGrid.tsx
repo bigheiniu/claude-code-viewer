@@ -12,10 +12,12 @@ import "react-grid-layout/css/styles.css";
 import "./session-grid.css";
 import type {
   GridLayoutItem,
+  NewSessionCard,
   PermissionMode,
   ProjectSession,
   ProjectWithSessions,
 } from "../types";
+import { NewSessionTerminalCard } from "./NewSessionTerminalCard";
 import { SessionCard } from "./SessionCard";
 
 const COLS = { lg: 4, md: 3, sm: 2, xs: 1 };
@@ -48,21 +50,25 @@ export const SessionGrid: FC<{
   projects: ProjectWithSessions[];
   expandedCards: Set<string>;
   savedLayout: GridLayoutItem[] | undefined;
+  newSessionCards?: NewSessionCard[];
   onRemove: (compositeId: string) => void;
   onToggleExpand: (compositeId: string) => void;
   onLayoutChange: (layout: GridLayoutItem[]) => void;
   getPermissionMode: (compositeId: string) => PermissionMode;
   onTogglePermission: (compositeId: string) => void;
+  onRemoveNewSession?: (compositeId: string) => void;
 }> = ({
   sessionIds,
   projects,
   expandedCards,
   savedLayout,
+  newSessionCards = [],
   onRemove,
   onToggleExpand,
   onLayoutChange,
   getPermissionMode,
   onTogglePermission,
+  onRemoveNewSession,
 }) => {
   const { width, containerRef, mounted } = useContainerWidth();
 
@@ -79,6 +85,14 @@ export const SessionGrid: FC<{
     return map;
   }, [projects]);
 
+  const newSessionLookup = useMemo(() => {
+    const map = new Map<string, NewSessionCard>();
+    for (const card of newSessionCards) {
+      map.set(card.compositeId, card);
+    }
+    return map;
+  }, [newSessionCards]);
+
   const displaySessions = useMemo(
     () =>
       sessionIds
@@ -89,6 +103,15 @@ export const SessionGrid: FC<{
         })
         .filter((s): s is NonNullable<typeof s> => s !== null),
     [sessionIds, sessionLookup],
+  );
+
+  // New session cards that are in the current display
+  const displayNewSessions = useMemo(
+    () =>
+      sessionIds
+        .map((id) => newSessionLookup.get(id))
+        .filter((c): c is NewSessionCard => c !== undefined),
+    [sessionIds, newSessionLookup],
   );
 
   // Build layout: use saved if available and ids match, else generate default
@@ -145,7 +168,7 @@ export const SessionGrid: FC<{
     [onLayoutChange],
   );
 
-  if (displaySessions.length === 0) {
+  if (displaySessions.length === 0 && displayNewSessions.length === 0) {
     return (
       <div
         ref={containerRef}
@@ -197,6 +220,19 @@ export const SessionGrid: FC<{
                 onRemove={() => onRemove(compositeId)}
                 onToggleExpand={() => onToggleExpand(compositeId)}
                 onTogglePermission={() => onTogglePermission(compositeId)}
+              />
+            </div>
+          ))}
+          {displayNewSessions.map((card) => (
+            <div key={card.compositeId} className="session-grid-item group">
+              <div className="drag-handle absolute top-0 left-8 right-8 h-5 cursor-grab active:cursor-grabbing z-10 flex items-center justify-center opacity-0 group-hover:opacity-40 transition-opacity">
+                <GripHorizontal className="h-4 w-4" />
+              </div>
+              <NewSessionTerminalCard
+                card={card}
+                isExpanded={expandedCards.has(card.compositeId)}
+                onRemove={() => onRemoveNewSession?.(card.compositeId)}
+                onToggleExpand={() => onToggleExpand(card.compositeId)}
               />
             </div>
           ))}

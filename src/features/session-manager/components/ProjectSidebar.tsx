@@ -1,9 +1,17 @@
 import { Trans } from "@lingui/react";
 import { Link } from "@tanstack/react-router";
-import { SearchIcon, XIcon } from "lucide-react";
+import {
+  ClockIcon,
+  EyeOffIcon,
+  MessageSquareIcon,
+  SearchIcon,
+  XIcon,
+  ZapIcon,
+} from "lucide-react";
 import { type FC, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import type { ProjectWithSessions } from "../types";
 import { filterProjects } from "../utils";
 import { ProjectGroup } from "./ProjectGroup";
@@ -23,6 +31,17 @@ export const ProjectSidebar: FC<{
   onClearSelection: () => void;
   onAddToTab: (compositeId: string) => void;
   onAddSelectedToTab?: () => void;
+  activeFilter: string;
+  onFilterChange: (filter: string) => void;
+  hiddenCount: number;
+  hiddenSessions: Set<string>;
+  onToggleHide: (compositeId: string) => void;
+  onNewSession: (
+    projectId: string,
+    projectPath: string,
+    projectColor: string,
+    projectName: string,
+  ) => void;
 }> = ({
   projects,
   expandedProjects,
@@ -38,6 +57,12 @@ export const ProjectSidebar: FC<{
   onClearSelection,
   onAddToTab,
   onAddSelectedToTab,
+  activeFilter,
+  onFilterChange,
+  hiddenCount,
+  hiddenSessions,
+  onToggleHide,
+  onNewSession,
 }) => {
   const filteredProjects = useMemo(
     () =>
@@ -73,6 +98,68 @@ export const ProjectSidebar: FC<{
         .filter((p): p is NonNullable<typeof p> => p !== null),
     [filteredProjects, projects],
   );
+
+  const finalProjects = useMemo(() => {
+    let result = displayProjects;
+
+    if (activeFilter === "hidden") {
+      result = result
+        .map((p) => ({
+          ...p,
+          sessions: p.sessions.filter((s) => hiddenSessions.has(s.compositeId)),
+        }))
+        .filter((p) => p.sessions.length > 0);
+    } else {
+      // Always hide hidden sessions unless viewing hidden filter
+      result = result
+        .map((p) => ({
+          ...p,
+          sessions: p.sessions.filter(
+            (s) => !hiddenSessions.has(s.compositeId),
+          ),
+        }))
+        .filter((p) => p.sessions.length > 0);
+
+      if (activeFilter === "recent-1d") {
+        const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+        result = result
+          .map((p) => ({
+            ...p,
+            sessions: p.sessions.filter((s) =>
+              s.lastModifiedAt
+                ? new Date(s.lastModifiedAt).getTime() > cutoff
+                : false,
+            ),
+          }))
+          .filter((p) => p.sessions.length > 0);
+      } else if (activeFilter === "most-messages") {
+        const allSessions = result.flatMap((p) => p.sessions);
+        const topIds = new Set(
+          [...allSessions]
+            .sort((a, b) => b.messageCount - a.messageCount)
+            .slice(0, 20)
+            .map((s) => s.compositeId),
+        );
+        result = result
+          .map((p) => ({
+            ...p,
+            sessions: p.sessions.filter((s) => topIds.has(s.compositeId)),
+          }))
+          .filter((p) => p.sessions.length > 0);
+      } else if (activeFilter === "running") {
+        result = result
+          .map((p) => ({
+            ...p,
+            sessions: p.sessions.filter(
+              (s) => s.status === "running" || s.status === "paused",
+            ),
+          }))
+          .filter((p) => p.sessions.length > 0);
+      }
+    }
+
+    return result;
+  }, [displayProjects, activeFilter, hiddenSessions]);
 
   const selectedNotInTab = hasActiveTab
     ? [...selectedSessions].filter((id) => !activeTabSessionIds.has(id))
@@ -113,13 +200,53 @@ export const ProjectSidebar: FC<{
         </div>
       </div>
 
+      {/* Smart filter tags */}
+      <div className="px-4 py-2 flex flex-wrap gap-1.5">
+        {[
+          { id: "all", label: "All", icon: null },
+          { id: "recent-1d", label: "Last 24h", icon: ClockIcon },
+          { id: "most-messages", label: "Most msgs", icon: MessageSquareIcon },
+          { id: "running", label: "Running", icon: ZapIcon },
+        ].map((filter) => (
+          <button
+            key={filter.id}
+            type="button"
+            className={cn(
+              "inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-colors border",
+              activeFilter === filter.id
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-muted/50 text-muted-foreground border-border hover:bg-muted",
+            )}
+            onClick={() => onFilterChange(filter.id)}
+          >
+            {filter.icon && <filter.icon className="h-3 w-3" />}
+            {filter.label}
+          </button>
+        ))}
+        {hiddenCount > 0 && (
+          <button
+            type="button"
+            className={cn(
+              "inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-colors border",
+              activeFilter === "hidden"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-muted/50 text-muted-foreground border-border hover:bg-muted",
+            )}
+            onClick={() => onFilterChange("hidden")}
+          >
+            <EyeOffIcon className="h-3 w-3" />
+            Hidden ({hiddenCount})
+          </button>
+        )}
+      </div>
+
       <div className="px-4 py-2 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold flex justify-between">
-        <span>Projects ({displayProjects.length})</span>
+        <span>Projects ({finalProjects.length})</span>
         <span>{selectedSessions.size} selected</span>
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 pb-4">
-        {displayProjects.map((project) => {
+        {finalProjects.map((project) => {
           const isExpanded = searchQuery.trim()
             ? true
             : expandedProjects.has(project.id);
@@ -131,10 +258,20 @@ export const ProjectSidebar: FC<{
               selectedSessions={selectedSessions}
               activeTabSessionIds={activeTabSessionIds}
               hasActiveTab={hasActiveTab}
+              hiddenSessions={hiddenSessions}
               onToggleExpand={() => onToggleProject(project.id)}
               onToggleSession={onToggleSession}
               onSelectAll={onSelectAllInProject}
               onAddToTab={onAddToTab}
+              onToggleHide={onToggleHide}
+              onNewSession={() =>
+                onNewSession(
+                  project.id,
+                  project.path,
+                  project.color,
+                  project.name,
+                )
+              }
             />
           );
         })}

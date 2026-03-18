@@ -3,6 +3,12 @@ import { ChevronsDownUp, ChevronsUpDown, SquareIcon } from "lucide-react";
 import { type FC, memo } from "react";
 import { Button } from "@/components/ui/button";
 
+function formatTokenCount(count: number): string {
+  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
+  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}K`;
+  return String(count);
+}
+
 export const CanvasHeader: FC<{
   tabName: string | null;
   sessionCount: number;
@@ -14,6 +20,9 @@ export const CanvasHeader: FC<{
   runningCount?: number;
   onStopAll?: () => void;
   isStoppingAll?: boolean;
+  totalCostUsd?: number;
+  totalInputTokens?: number;
+  totalOutputTokens?: number;
 }> = memo(
   ({
     tabName,
@@ -25,6 +34,9 @@ export const CanvasHeader: FC<{
     runningCount,
     onStopAll,
     isStoppingAll,
+    totalCostUsd,
+    totalInputTokens,
+    totalOutputTokens,
   }) => {
     return (
       <div className="flex items-center justify-between px-6 py-3">
@@ -35,6 +47,18 @@ export const CanvasHeader: FC<{
           <span className="text-xs text-muted-foreground">
             {sessionCount} session{sessionCount !== 1 ? "s" : ""}
           </span>
+          {totalCostUsd !== undefined && totalCostUsd > 0 && (
+            <div className="flex items-center gap-3 text-xs text-muted-foreground border-l border-border pl-3 ml-1">
+              <span className="font-mono">${totalCostUsd.toFixed(2)}</span>
+              {totalInputTokens !== undefined &&
+                totalOutputTokens !== undefined && (
+                  <span className="font-mono text-[10px]">
+                    {formatTokenCount(totalInputTokens)}↑{" "}
+                    {formatTokenCount(totalOutputTokens)}↓
+                  </span>
+                )}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {onStopAll && runningCount !== undefined && runningCount > 0 && (

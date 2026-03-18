@@ -1,4 +1,4 @@
-import { CheckIcon, PlusIcon } from "lucide-react";
+import { CheckIcon, EyeIcon, EyeOffIcon, PlusIcon } from "lucide-react";
 import { type FC, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,24 +10,29 @@ export const SessionItem: FC<{
   projectColor: string;
   isSelected: boolean;
   isInActiveTab: boolean;
+  isHidden: boolean;
   hasActiveTab: boolean;
   onToggle: () => void;
   onAddToTab: () => void;
+  onToggleHide: () => void;
 }> = memo(
   ({
     session,
     projectColor,
     isSelected,
     isInActiveTab,
+    isHidden,
     hasActiveTab,
     onToggle,
     onAddToTab,
+    onToggleHide,
   }) => {
     return (
       <button
         type="button"
         className={cn(
           "group relative flex items-center gap-2 rounded-md px-2 py-2 cursor-pointer transition-colors w-full text-left",
+          isHidden && "opacity-50",
           isSelected
             ? "bg-accent/50"
             : isInActiveTab
@@ -106,6 +111,33 @@ export const SessionItem: FC<{
             Tab
           </span>
         )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn(
+            "absolute right-1 h-5 px-1.5 text-[9px] transition-opacity",
+            hasActiveTab && !isInActiveTab ? "top-7" : "top-1",
+            isHidden
+              ? "opacity-70 text-muted-foreground"
+              : "opacity-0 group-hover:opacity-100",
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleHide();
+          }}
+        >
+          {isHidden ? (
+            <>
+              <EyeIcon className="h-3 w-3 mr-0.5" />
+              Show
+            </>
+          ) : (
+            <>
+              <EyeOffIcon className="h-3 w-3 mr-0.5" />
+              Hide
+            </>
+          )}
+        </Button>
       </button>
     );
   },

@@ -29,6 +29,15 @@ export interface ProjectWithSessions {
   sessions: ProjectSession[];
 }
 
+export interface NewSessionCard {
+  compositeId: string;
+  projectId: string;
+  projectPath: string;
+  projectColor: string;
+  projectName: string;
+  createdAt: number;
+}
+
 export interface ProjectSession {
   sessionId: string;
   compositeId: string;
@@ -41,4 +50,6 @@ export interface ProjectSession {
   status?: "running" | "paused";
   modelName?: string | null;
   costUsd?: number;
+  inputTokens?: number;
+  outputTokens?: number;
 }
