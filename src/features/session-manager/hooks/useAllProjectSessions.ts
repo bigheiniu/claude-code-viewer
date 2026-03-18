@@ -35,7 +35,7 @@ export function useAllProjectSessions(): {
   // Fetch first page of sessions for each project
   const sessionQueries = useQueries({
     queries: projectList.projects.map((project) => ({
-      queryKey: projectDetailQuery(project.id).queryKey,
+      queryKey: ["session-manager", "projects", project.id],
       queryFn: projectDetailQuery(project.id).queryFn,
       staleTime: 30 * 1000, // 30 seconds - SSE will invalidate when needed
     })),

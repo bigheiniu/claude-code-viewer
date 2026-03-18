@@ -10,6 +10,9 @@ export const SSEEventListeners: FC<PropsWithChildren> = ({ children }) => {
     await queryClient.invalidateQueries({
       queryKey: projectDetailQuery(event.projectId).queryKey,
     });
+    await queryClient.invalidateQueries({
+      queryKey: ["session-manager", "projects", event.projectId],
+    });
   });
 
   useServerEventListener("sessionChanged", async (event) => {
