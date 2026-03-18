@@ -437,6 +437,21 @@ export const SessionCard: FC<{
       setContextMenu({ open: true, x: e.clientX, y: e.clientY });
     };
 
+    const handleExpand = () => {
+      if (
+        !isExpanded &&
+        (session.status === "running" || session.status === "paused")
+      ) {
+        const confirmed = window.confirm(
+          "This session is currently active in another process. " +
+            "Opening a terminal here will attempt to resume it, which may conflict " +
+            "with the existing process.\n\nContinue anyway?",
+        );
+        if (!confirmed) return;
+      }
+      onToggleExpand();
+    };
+
     if (!isExpanded) {
       return (
         <>
@@ -446,7 +461,7 @@ export const SessionCard: FC<{
             projectPath={projectPath}
             permissionMode={permissionMode}
             onRemove={onRemove}
-            onExpand={onToggleExpand}
+            onExpand={handleExpand}
             onTogglePermission={onTogglePermission}
             onContextMenu={handleContextMenu}
           />
