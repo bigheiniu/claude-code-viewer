@@ -1,3 +1,5 @@
+import { useMutation } from "@tanstack/react-query";
+import { useAtomValue } from "jotai";
 import { MenuIcon, PanelLeftIcon } from "lucide-react";
 import {
   type FC,
@@ -7,9 +9,12 @@ import {
   useMemo,
   useState,
 } from "react";
+import { toast } from "sonner";
+import { sessionProcessesAtom } from "@/app/projects/[projectId]/sessions/[sessionId]/store/sessionProcessesAtom";
 import { Loading } from "@/components/Loading";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { honoClient } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import { useAllProjectSessions } from "../hooks/useAllProjectSessions";
 import { useSessionManager } from "../hooks/useSessionManager";
@@ -26,25 +31,61 @@ const SessionManagerContent: FC = () => {
   const isMobile = useIsMobile();
   const [sortBy, setSortBy] = useState("recent");
 
-  const activeTabSessionIds = manager.currentTab?.sessionIds ?? [];
+  const sessionProcesses = useAtomValue(sessionProcessesAtom);
+  const runningProcesses = useMemo(
+    () => sessionProcesses.filter((p) => p.status === "running"),
+    [sessionProcesses],
+  );
+
+  const stopAllMutation = useMutation({
+    mutationFn: async () => {
+      const abortPromises = runningProcesses.map((process) =>
+        honoClient.api["claude-code"]["session-processes"][
+          ":sessionProcessId"
+        ].abort.$post({
+          param: { sessionProcessId: process.id },
+          json: { projectId: process.projectId },
+        }),
+      );
+      await Promise.allSettled(abortPromises);
+    },
+    onSuccess: () => {
+      toast.success(`Stopped ${runningProcesses.length} running session(s)`);
+    },
+    onError: (error) => {
+      toast.error(
+        `Failed to stop some sessions: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    },
+  });
+
+  const activeTabSessionIds = useMemo(
+    () => new Set(manager.currentTab?.sessionIds ?? []),
+    [manager.currentTab?.sessionIds],
+  );
   const displaySessionIds = manager.currentTab
-    ? activeTabSessionIds
+    ? (manager.currentTab.sessionIds ?? [])
     : [...manager.selectedSessions];
 
   // Bug #2 fix: Compute allCompositeIds from filtered projects
-  const filteredProjects = filterProjects(
-    projects.map((p) => ({
-      ...p,
-      sessions: p.sessions.map((s) => ({
-        ...s,
-        id: s.compositeId,
-        title: s.title,
-      })),
-    })),
-    manager.searchQuery,
+  const filteredProjects = useMemo(
+    () =>
+      filterProjects(
+        projects.map((p) => ({
+          ...p,
+          sessions: p.sessions.map((s) => ({
+            ...s,
+            id: s.compositeId,
+            title: s.title,
+          })),
+        })),
+        manager.searchQuery,
+      ),
+    [projects, manager.searchQuery],
   );
-  const allCompositeIds = filteredProjects.flatMap((p) =>
-    p.sessions.map((s) => s.id),
+  const allCompositeIds = useMemo(
+    () => filteredProjects.flatMap((p) => p.sessions.map((s) => s.id)),
+    [filteredProjects],
   );
 
   // Build a lookup map for sorting
@@ -96,7 +137,7 @@ const SessionManagerContent: FC = () => {
     (compositeId: string) => {
       if (manager.activeTabId) {
         // If session is in active tab, remove it; otherwise add it
-        if (activeTabSessionIds.includes(compositeId)) {
+        if (activeTabSessionIds.has(compositeId)) {
           manager.removeFromTab(compositeId);
         } else {
           manager.addToTab(compositeId);
@@ -124,7 +165,7 @@ const SessionManagerContent: FC = () => {
   const handleAddSelectedToTab = useCallback(() => {
     if (!manager.activeTabId) return;
     for (const id of manager.selectedSessions) {
-      if (!activeTabSessionIds.includes(id)) {
+      if (!activeTabSessionIds.has(id)) {
         manager.addToTab(id);
       }
     }
@@ -262,6 +303,9 @@ const SessionManagerContent: FC = () => {
           hasExpandedCards={manager.expandedCards.size > 0}
           sortBy={sortBy}
           onSortChange={setSortBy}
+          runningCount={runningProcesses.length}
+          onStopAll={() => stopAllMutation.mutate()}
+          isStoppingAll={stopAllMutation.isPending}
         />
         <div className="flex-1 overflow-auto">
           <SessionGrid

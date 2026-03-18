@@ -11,7 +11,15 @@ import {
   ShieldCheckIcon,
   XIcon,
 } from "lucide-react";
-import { type FC, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type FC,
+  memo,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { toast } from "sonner";
 import { ConversationList } from "@/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList";
@@ -31,6 +39,8 @@ import { honoClient } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import type { PermissionMode, ProjectSession } from "../types";
 import { generateShortTitle } from "../utils";
+
+const MAX_VISIBLE = 30;
 
 // --- Collapsed preview card ---
 const CollapsedCard: FC<{
@@ -289,12 +299,14 @@ const ExpandedChatContent: FC<{
   projectId: string;
   sessionId: string;
 }> = ({ projectId, sessionId }) => {
-  const sessionData = useSession(projectId, sessionId);
   const { getSessionProcess } = useSessionProcess();
   const relatedProcess = useMemo(
     () => getSessionProcess(sessionId),
     [getSessionProcess, sessionId],
   );
+  const sessionData = useSession(projectId, sessionId, {
+    isRunning: relatedProcess?.status === "running",
+  });
   const rawConversations = sessionData?.conversations ?? [];
   const getToolResult = sessionData?.getToolResult ?? (() => undefined);
 
@@ -310,6 +322,13 @@ const ExpandedChatContent: FC<{
       return !(next && "type" in next && next.type === "file-history-snapshot");
     });
   }, [rawConversations]);
+
+  const [showAll, setShowAll] = useState(false);
+  const visibleConversations = useMemo(() => {
+    if (showAll || conversations.length <= MAX_VISIBLE) return conversations;
+    // Show the LAST MAX_VISIBLE messages (most recent are most relevant)
+    return conversations.slice(-MAX_VISIBLE);
+  }, [conversations, showAll]);
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const hasScrolledOnMount = useRef(false);
@@ -384,8 +403,17 @@ const ExpandedChatContent: FC<{
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto min-h-0 px-2"
       >
+        {!showAll && conversations.length > MAX_VISIBLE && (
+          <button
+            type="button"
+            className="w-full py-2 text-xs text-muted-foreground hover:text-foreground transition-colors border-b border-border/30"
+            onClick={() => setShowAll(true)}
+          >
+            Show {conversations.length - MAX_VISIBLE} earlier messages
+          </button>
+        )}
         <ConversationList
-          conversations={conversations}
+          conversations={visibleConversations}
           getToolResult={getToolResult}
           projectId={projectId}
           sessionId={sessionId}
@@ -580,41 +608,113 @@ export const SessionCard: FC<{
   onRemove: () => void;
   onToggleExpand: () => void;
   onTogglePermission: () => void;
-}> = ({
-  session,
-  projectColor,
-  projectPath,
-  permissionMode,
-  isExpanded,
-  onRemove,
-  onToggleExpand,
-  onTogglePermission,
-}) => {
-  const [contextMenu, setContextMenu] = useState<{
-    open: boolean;
-    x: number;
-    y: number;
-  }>({ open: false, x: 0, y: 0 });
+}> = memo(
+  ({
+    session,
+    projectColor,
+    projectPath,
+    permissionMode,
+    isExpanded,
+    onRemove,
+    onToggleExpand,
+    onTogglePermission,
+  }) => {
+    const [contextMenu, setContextMenu] = useState<{
+      open: boolean;
+      x: number;
+      y: number;
+    }>({ open: false, x: 0, y: 0 });
 
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setContextMenu({ open: true, x: e.clientX, y: e.clientY });
-  };
+    const handleContextMenu = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setContextMenu({ open: true, x: e.clientX, y: e.clientY });
+    };
 
-  if (!isExpanded) {
+    if (!isExpanded) {
+      return (
+        <>
+          <CollapsedCard
+            session={session}
+            projectColor={projectColor}
+            projectPath={projectPath}
+            permissionMode={permissionMode}
+            onRemove={onRemove}
+            onExpand={onToggleExpand}
+            onTogglePermission={onTogglePermission}
+            onContextMenu={handleContextMenu}
+          />
+          <SessionContextMenu
+            session={session}
+            projectId={session.projectId}
+            sessionId={session.sessionId}
+            projectPath={projectPath}
+            open={contextMenu.open}
+            position={{ x: contextMenu.x, y: contextMenu.y }}
+            onClose={() => setContextMenu((p) => ({ ...p, open: false }))}
+          />
+        </>
+      );
+    }
+
+    // Expanded: full inline chat card
     return (
       <>
-        <CollapsedCard
-          session={session}
-          projectColor={projectColor}
-          projectPath={projectPath}
-          permissionMode={permissionMode}
-          onRemove={onRemove}
-          onExpand={onToggleExpand}
-          onTogglePermission={onTogglePermission}
+        <div
+          className="relative rounded-xl border border-border bg-card overflow-hidden h-full flex flex-col"
           onContextMenu={handleContextMenu}
-        />
+        >
+          <div className="h-0.5" style={{ backgroundColor: projectColor }} />
+
+          {/* Compact header */}
+          <div className="flex items-center gap-2 px-2 py-1.5 border-b border-border/40 bg-muted/30 flex-shrink-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-[10px] font-semibold truncate flex-1">
+                  {session.memoryTitle ?? generateShortTitle(session.title)}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                className="max-w-xs text-xs whitespace-pre-wrap"
+              >
+                {session.title}
+              </TooltipContent>
+            </Tooltip>
+            {session.status === "running" && (
+              <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
+            )}
+            <Link
+              to="/projects/$projectId/session"
+              params={{ projectId: session.projectId }}
+              search={{ sessionId: session.sessionId }}
+              className="text-muted-foreground hover:text-foreground flex items-center gap-0.5 text-[9px] transition-colors"
+            >
+              <ExternalLinkIcon className="h-3 w-3" />
+              Open
+            </Link>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
+              onClick={onToggleExpand}
+            >
+              <XIcon className="h-3 w-3" />
+            </Button>
+          </div>
+
+          {/* Inline chat */}
+          <div className="flex-1 min-h-0">
+            <ErrorBoundary FallbackComponent={CardErrorFallback}>
+              <Suspense fallback={<Loading />}>
+                <ExpandedChatContent
+                  projectId={session.projectId}
+                  sessionId={session.sessionId}
+                />
+              </Suspense>
+            </ErrorBoundary>
+          </div>
+        </div>
         <SessionContextMenu
           session={session}
           projectId={session.projectId}
@@ -626,75 +726,5 @@ export const SessionCard: FC<{
         />
       </>
     );
-  }
-
-  // Expanded: full inline chat card
-  return (
-    <>
-      <div
-        className="relative rounded-xl border border-border bg-card overflow-hidden h-full flex flex-col"
-        onContextMenu={handleContextMenu}
-      >
-        <div className="h-0.5" style={{ backgroundColor: projectColor }} />
-
-        {/* Compact header */}
-        <div className="flex items-center gap-2 px-2 py-1.5 border-b border-border/40 bg-muted/30 flex-shrink-0">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="text-[10px] font-semibold truncate flex-1">
-                {session.memoryTitle ?? generateShortTitle(session.title)}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent
-              side="top"
-              className="max-w-xs text-xs whitespace-pre-wrap"
-            >
-              {session.title}
-            </TooltipContent>
-          </Tooltip>
-          {session.status === "running" && (
-            <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
-          )}
-          <Link
-            to="/projects/$projectId/session"
-            params={{ projectId: session.projectId }}
-            search={{ sessionId: session.sessionId }}
-            className="text-muted-foreground hover:text-foreground flex items-center gap-0.5 text-[9px] transition-colors"
-          >
-            <ExternalLinkIcon className="h-3 w-3" />
-            Open
-          </Link>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
-            onClick={onToggleExpand}
-          >
-            <XIcon className="h-3 w-3" />
-          </Button>
-        </div>
-
-        {/* Inline chat */}
-        <div className="flex-1 min-h-0">
-          <ErrorBoundary FallbackComponent={CardErrorFallback}>
-            <Suspense fallback={<Loading />}>
-              <ExpandedChatContent
-                projectId={session.projectId}
-                sessionId={session.sessionId}
-              />
-            </Suspense>
-          </ErrorBoundary>
-        </div>
-      </div>
-      <SessionContextMenu
-        session={session}
-        projectId={session.projectId}
-        sessionId={session.sessionId}
-        projectPath={projectPath}
-        open={contextMenu.open}
-        position={{ x: contextMenu.x, y: contextMenu.y }}
-        onClose={() => setContextMenu((p) => ({ ...p, open: false }))}
-      />
-    </>
-  );
-};
+  },
+);

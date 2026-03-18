@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type {
   GridLayoutItem,
   PermissionMode,
@@ -183,10 +183,17 @@ export function useSessionManager() {
 
   // Derive expanded cards for current tab
   const tabKey = activeTabId ?? "__no_tab__";
-  const expandedCards = new Set(getExpandedCards(tabKey));
+  const expandedCardsSet = useMemo(
+    () => new Set(getExpandedCards(tabKey)),
+    [getExpandedCards, tabKey],
+  );
+  const expandedProjectsSet = useMemo(
+    () => new Set(expandedProjects),
+    [expandedProjects],
+  );
 
   return {
-    expandedProjects: new Set(expandedProjects),
+    expandedProjects: expandedProjectsSet,
     selectedSessions,
     searchQuery,
     setSearchQuery,
@@ -206,7 +213,7 @@ export function useSessionManager() {
     renameTab,
     getPermissionMode,
     togglePermissionMode,
-    expandedCards,
+    expandedCards: expandedCardsSet,
     toggleCardExpanded,
     currentGridLayout,
     updateGridLayout,

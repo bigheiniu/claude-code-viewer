@@ -1,7 +1,7 @@
 import { Trans } from "@lingui/react";
 import { Link } from "@tanstack/react-router";
 import { SearchIcon, XIcon } from "lucide-react";
-import type { FC } from "react";
+import { type FC, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ProjectWithSessions } from "../types";
@@ -13,7 +13,7 @@ export const ProjectSidebar: FC<{
   expandedProjects: Set<string>;
   selectedSessions: Set<string>;
   searchQuery: string;
-  activeTabSessionIds: string[];
+  activeTabSessionIds: Set<string>;
   hasActiveTab: boolean;
   onSearchChange: (query: string) => void;
   onToggleProject: (projectId: string) => void;
@@ -39,35 +39,43 @@ export const ProjectSidebar: FC<{
   onAddToTab,
   onAddSelectedToTab,
 }) => {
-  const filteredProjects = filterProjects(
-    projects.map((p) => ({
-      ...p,
-      sessions: p.sessions.map((s) => ({
-        ...s,
-        id: s.compositeId,
-        title: s.title,
-        firstUserMessage: s.firstUserMessage,
-      })),
-    })),
-    searchQuery,
+  const filteredProjects = useMemo(
+    () =>
+      filterProjects(
+        projects.map((p) => ({
+          ...p,
+          sessions: p.sessions.map((s) => ({
+            ...s,
+            id: s.compositeId,
+            title: s.title,
+            firstUserMessage: s.firstUserMessage,
+          })),
+        })),
+        searchQuery,
+      ),
+    [projects, searchQuery],
   );
 
-  const displayProjects = filteredProjects
-    .map((fp) => {
-      const original = projects.find((p) => p.id === fp.id);
-      if (!original) return null;
-      const filteredSessionIds = new Set(fp.sessions.map((s) => s.id));
-      return {
-        ...original,
-        sessions: original.sessions.filter((s) =>
-          filteredSessionIds.has(s.compositeId),
-        ),
-      };
-    })
-    .filter((p): p is NonNullable<typeof p> => p !== null);
+  const displayProjects = useMemo(
+    () =>
+      filteredProjects
+        .map((fp) => {
+          const original = projects.find((p) => p.id === fp.id);
+          if (!original) return null;
+          const filteredSessionIds = new Set(fp.sessions.map((s) => s.id));
+          return {
+            ...original,
+            sessions: original.sessions.filter((s) =>
+              filteredSessionIds.has(s.compositeId),
+            ),
+          };
+        })
+        .filter((p): p is NonNullable<typeof p> => p !== null),
+    [filteredProjects, projects],
+  );
 
   const selectedNotInTab = hasActiveTab
-    ? [...selectedSessions].filter((id) => !activeTabSessionIds.includes(id))
+    ? [...selectedSessions].filter((id) => !activeTabSessionIds.has(id))
     : [];
 
   return (

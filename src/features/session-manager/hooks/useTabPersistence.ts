@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type {
   GridLayoutItem,
   PermissionMode,
@@ -121,11 +121,19 @@ export function useTabPersistence() {
     loadFromStorage(GRID_LAYOUTS_KEY, {}, isTabGridLayouts),
   );
 
+  const gridLayoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const setGridLayout = useCallback(
     (tabId: string, layout: GridLayoutItem[]) => {
       setGridLayoutsState((prev) => {
         const next = { ...prev, [tabId]: layout };
-        saveToStorage(GRID_LAYOUTS_KEY, next);
+        // Debounce localStorage write to avoid thrashing during drag operations
+        if (gridLayoutTimerRef.current) {
+          clearTimeout(gridLayoutTimerRef.current);
+        }
+        gridLayoutTimerRef.current = setTimeout(() => {
+          saveToStorage(GRID_LAYOUTS_KEY, next);
+        }, 500);
         return next;
       });
     },
@@ -141,10 +149,20 @@ export function useTabPersistence() {
     Record<string, string[]>
   >(() => loadFromStorage(EXPANDED_CARDS_KEY, {}, isTabExpandedCards));
 
+  const expandedCardsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
   const _setExpandedCards = useCallback((tabId: string, cards: string[]) => {
     setTabExpandedCardsState((prev) => {
       const next = { ...prev, [tabId]: cards };
-      saveToStorage(EXPANDED_CARDS_KEY, next);
+      // Debounce localStorage write to avoid thrashing during batch operations
+      if (expandedCardsTimerRef.current) {
+        clearTimeout(expandedCardsTimerRef.current);
+      }
+      expandedCardsTimerRef.current = setTimeout(() => {
+        saveToStorage(EXPANDED_CARDS_KEY, next);
+      }, 500);
       return next;
     });
   }, []);
