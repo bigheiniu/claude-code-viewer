@@ -20,8 +20,8 @@ import { SessionCard } from "./SessionCard";
 
 const COLS = { lg: 4, md: 3, sm: 2, xs: 1 };
 const BREAKPOINTS = { lg: 1200, md: 900, sm: 600, xs: 0 };
-const ROW_HEIGHT = 60;
-const COLLAPSED_H = 3;
+const ROW_HEIGHT = 55;
+const COLLAPSED_H = 2;
 const EXPANDED_H = 8;
 
 function generateDefaultLayout(

@@ -75,6 +75,8 @@ export function useAllProjectSessions(): {
               : null,
             firstUserMessage: firstUserMessageText,
             status: process?.status,
+            modelName: session.meta.modelName,
+            costUsd: session.meta.cost.totalUsd,
           };
         },
       );

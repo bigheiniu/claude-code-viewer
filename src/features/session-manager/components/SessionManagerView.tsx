@@ -1,10 +1,19 @@
 import { MenuIcon, PanelLeftIcon } from "lucide-react";
-import { type FC, Suspense, useCallback, useEffect, useState } from "react";
+import {
+  type FC,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Loading } from "@/components/Loading";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { cn } from "@/lib/utils";
 import { useAllProjectSessions } from "../hooks/useAllProjectSessions";
 import { useSessionManager } from "../hooks/useSessionManager";
+import type { ProjectSession } from "../types";
 import { filterProjects } from "../utils";
 import { CanvasHeader } from "./CanvasHeader";
 import { ProjectSidebar } from "./ProjectSidebar";
@@ -15,6 +24,7 @@ const SessionManagerContent: FC = () => {
   const { projects } = useAllProjectSessions();
   const manager = useSessionManager();
   const isMobile = useIsMobile();
+  const [sortBy, setSortBy] = useState("recent");
 
   const activeTabSessionIds = manager.currentTab?.sessionIds ?? [];
   const displaySessionIds = manager.currentTab
@@ -36,6 +46,50 @@ const SessionManagerContent: FC = () => {
   const allCompositeIds = filteredProjects.flatMap((p) =>
     p.sessions.map((s) => s.id),
   );
+
+  // Build a lookup map for sorting
+  const sessionLookup = useMemo(() => {
+    const map = new Map<string, ProjectSession>();
+    for (const p of projects) {
+      for (const s of p.sessions) {
+        map.set(s.compositeId, s);
+      }
+    }
+    return map;
+  }, [projects]);
+
+  const sortedSessionIds = useMemo(() => {
+    return [...displaySessionIds].sort((a, b) => {
+      const sa = sessionLookup.get(a);
+      const sb = sessionLookup.get(b);
+      if (!sa || !sb) return 0;
+      switch (sortBy) {
+        case "oldest": {
+          const da = sa.lastModifiedAt
+            ? new Date(sa.lastModifiedAt).getTime()
+            : 0;
+          const db = sb.lastModifiedAt
+            ? new Date(sb.lastModifiedAt).getTime()
+            : 0;
+          return da - db;
+        }
+        case "messages":
+          return sb.messageCount - sa.messageCount;
+        case "name":
+          return sa.title.localeCompare(sb.title);
+        default: {
+          // "recent"
+          const da = sa.lastModifiedAt
+            ? new Date(sa.lastModifiedAt).getTime()
+            : 0;
+          const db = sb.lastModifiedAt
+            ? new Date(sb.lastModifiedAt).getTime()
+            : 0;
+          return db - da;
+        }
+      }
+    });
+  }, [displaySessionIds, sortBy, sessionLookup]);
 
   // Bug #3 fix: When a tab is active, toggle should add/remove from tab
   const handleToggleSession = useCallback(
@@ -143,11 +197,12 @@ const SessionManagerContent: FC = () => {
       {/* Desktop sidebar */}
       {!isMobile && (
         <div
-          className={
+          className={cn(
+            "transition-all duration-200 ease-in-out",
             sidebarCollapsed
               ? "w-0 min-w-0 overflow-hidden"
-              : "w-[290px] min-w-[290px]"
-          }
+              : "w-[290px] min-w-[290px]",
+          )}
         >
           {sidebarContent}
         </div>
@@ -201,14 +256,16 @@ const SessionManagerContent: FC = () => {
         </div>
         <CanvasHeader
           tabName={manager.currentTab?.name ?? null}
-          sessionCount={displaySessionIds.length}
+          sessionCount={sortedSessionIds.length}
           onExpandAll={handleExpandAll}
           onCollapseAll={handleCollapseAll}
           hasExpandedCards={manager.expandedCards.size > 0}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
         />
         <div className="flex-1 overflow-auto">
           <SessionGrid
-            sessionIds={displaySessionIds}
+            sessionIds={sortedSessionIds}
             projects={projects}
             expandedCards={manager.expandedCards}
             savedLayout={manager.currentGridLayout}

@@ -9,7 +9,16 @@ export const CanvasHeader: FC<{
   onExpandAll?: () => void;
   onCollapseAll?: () => void;
   hasExpandedCards?: boolean;
-}> = ({ tabName, sessionCount, onExpandAll, onCollapseAll }) => {
+  sortBy?: string;
+  onSortChange?: (sort: string) => void;
+}> = ({
+  tabName,
+  sessionCount,
+  onExpandAll,
+  onCollapseAll,
+  sortBy,
+  onSortChange,
+}) => {
   return (
     <div className="flex items-center justify-between px-6 py-3">
       <div className="flex items-center gap-3">
@@ -20,7 +29,19 @@ export const CanvasHeader: FC<{
           {sessionCount} session{sessionCount !== 1 ? "s" : ""}
         </span>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
+        {onSortChange && (
+          <select
+            value={sortBy ?? "recent"}
+            onChange={(e) => onSortChange(e.target.value)}
+            className="h-7 px-2 text-xs bg-transparent border border-border rounded text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="recent">Recent</option>
+            <option value="oldest">Oldest</option>
+            <option value="messages">Most Messages</option>
+            <option value="name">Name A-Z</option>
+          </select>
+        )}
         {onExpandAll && (
           <Button
             variant="ghost"

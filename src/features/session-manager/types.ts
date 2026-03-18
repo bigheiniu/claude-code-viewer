@@ -38,4 +38,6 @@ export interface ProjectSession {
   lastModifiedAt: string | null;
   firstUserMessage: string | null;
   status?: "running" | "paused";
+  modelName?: string | null;
+  costUsd?: number;
 }

@@ -81,7 +81,7 @@ export const TabBar: FC<{
           <div
             key={tab.id}
             className={cn(
-              "flex shrink-0 items-center gap-1 rounded-t-md transition-colors text-xs",
+              "flex shrink-0 items-center gap-2 rounded-t-md transition-colors text-xs",
               isActive
                 ? "bg-background border-b-2 border-primary font-semibold"
                 : "text-muted-foreground hover:bg-background/50",

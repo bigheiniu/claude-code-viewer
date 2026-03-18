@@ -95,10 +95,20 @@ const CollapsedCard: FC<{
                 </TooltipContent>
               </Tooltip>
               {session.status === "running" && (
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
+                <Badge
+                  variant="secondary"
+                  className="h-4 px-1.5 text-[9px] bg-green-500/15 text-green-600 dark:text-green-400"
+                >
+                  Running
+                </Badge>
               )}
               {session.status === "paused" && (
-                <span className="h-1.5 w-1.5 rounded-full bg-yellow-500 flex-shrink-0" />
+                <Badge
+                  variant="secondary"
+                  className="h-4 px-1.5 text-[9px] bg-yellow-500/15 text-yellow-600 dark:text-yellow-400"
+                >
+                  Paused
+                </Badge>
               )}
             </div>
             {session.firstUserMessage && (
@@ -165,6 +175,19 @@ const CollapsedCard: FC<{
             >
               skip-perms
             </Badge>
+          )}
+          {session.modelName && (
+            <Badge
+              variant="secondary"
+              className="h-4 px-1.5 text-[9px] font-mono"
+            >
+              {session.modelName.replace(/^claude-/, "").replace(/-\d{8}$/, "")}
+            </Badge>
+          )}
+          {session.costUsd !== undefined && session.costUsd > 0 && (
+            <span className="text-[9px] text-muted-foreground font-mono">
+              ${session.costUsd.toFixed(2)}
+            </span>
           )}
           {session.lastModifiedAt && (
             <span className="text-[9px] text-muted-foreground">
